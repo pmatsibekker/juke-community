@@ -1,5 +1,6 @@
 package com.example.greeting;
 
+import org.juke.framework.annotation.JukeController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
  * where {@code @Juke} actually replaces the upstream service with its
  * proxy.
  */
+@JukeController
 @RestController
 public class JukeGreetingController {
 

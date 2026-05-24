@@ -7,13 +7,28 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a DTO field as a candidate for the {@code field_ignore_rule} table.
+ * Marks a DTO field that should be ignored during recording/replay comparison.
  *
- * <p>When a recording ZIP is registered, {@code IgnoreRuleSeeder} scans every
- * class referenced by the recording for fields carrying this annotation and
- * persists a {@code source = ANNOTATION} ignore rule for each one. The rule
- * applies to <em>both</em> the input-diff engine (Phase 3 §5.2) and the
- * controller mismatch comparison (§5.4).
+ * <p>The annotation is honoured in three places, none of which require any
+ * external configuration — the framework reflects on the live argument /
+ * request DTO / response type and produces the corresponding ignore rules
+ * directly via {@code JukeIgnorableScanner}:
+ * <ul>
+ *   <li>the {@code @Juke} seam's per-call input comparison (so a recorded
+ *       argument whose only difference is a {@code @JukeIgnorable} field still
+ *       counts as a match);</li>
+ *   <li>{@code @JukeController}'s inbound request diff (paths anchored at
+ *       {@code $.body.…});</li>
+ *   <li>{@code @JukeController}'s outbound response diff (paths anchored at
+ *       {@code $.…}).</li>
+ * </ul>
+ * In addition, Enterprise's {@code IgnoreRuleSeeder} reads the same annotation
+ * to populate the {@code field_ignore_rule} table for the scenario service —
+ * the two paths produce equivalent rules so both flows behave identically.
+ *
+ * <p>The annotation applies on both DTO classes and record components: in
+ * {@code record Foo(@JukeIgnorable String x)} the JLS propagates the
+ * annotation to the underlying field, so the same reflection picks it up.
  *
  * <h3>Strategies</h3>
  * <ul>

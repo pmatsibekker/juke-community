@@ -50,6 +50,31 @@ public final class JukeIgnorableScanner {
         return rules;
     }
 
+    /**
+     * Scans a single type for {@link JukeIgnorable} fields, anchoring the
+     * generated rules at the supplied {@code rootPath}.
+     *
+     * <p>Used by the controller-advice request/response diff so that
+     * {@code @JukeIgnorable} on a controller DTO's fields works without
+     * requiring a scenario-service {@code IgnoreRuleProvider} to be installed.
+     *
+     * @param rootType the runtime type to walk (may be {@code null} → empty list)
+     * @param rootPath the JSON path prefix the rules should be anchored at
+     *                 (e.g. {@code "$"} for a response, {@code "$.body"} for a
+     *                 captured request body). Must not be {@code null}.
+     * @return ignore rules under {@code rootPath}; never null
+     */
+    public static List<FieldIgnoreRule> scan(Class<?> rootType, String rootPath) {
+        if (rootPath == null) {
+            throw new IllegalArgumentException("rootPath cannot be null");
+        }
+        List<FieldIgnoreRule> rules = new ArrayList<>();
+        if (rootType != null) {
+            scanType(rootType, rootPath, rules, new HashSet<>());
+        }
+        return rules;
+    }
+
     private static void scanType(Class<?> type, String basePath,
                                  List<FieldIgnoreRule> out, Set<Class<?>> onStack) {
         if (!isScannable(type) || onStack.contains(type)) {

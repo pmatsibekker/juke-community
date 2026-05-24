@@ -1,5 +1,6 @@
 package com.example.todo;
 
+import org.juke.framework.annotation.JukeController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,6 +29,7 @@ import java.util.Map;
  *   GET    /todos/pending    list pending
  * </pre>
  */
+@JukeController
 @RestController
 @RequestMapping("/todos")
 public class ToDoController {

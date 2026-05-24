@@ -6,6 +6,7 @@ import org.juke.framework.proxy.JukeState;
 import org.juke.framework.proxy.ReplayHandler;
 import org.juke.framework.storage.JukeHelper;
 import org.juke.framework.storage.JukeZipDAOImpl;
+import org.juke.remix.aspect.JukeControllerAdvice;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,7 @@ public class ReplayServiceImpl implements ReplayService {
         JukeZipDAOImpl impl = new JukeZipDAOImpl(ConfigUtil.getJukePath(), whiteListed);
         JukeHelper.setJukeDao(impl);
         JukeFactory.resetReplay();
+        JukeControllerAdvice.resetCounters();
         if (!impl.exists()) {
             return RemixUtil.NOK;
         }
