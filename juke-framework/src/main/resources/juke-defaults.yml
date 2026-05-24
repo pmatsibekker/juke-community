@@ -1,0 +1,32 @@
+# ============================================================================
+# Juke Framework — Internal Defaults
+# ============================================================================
+# This file ships inside juke-framework.jar and provides baseline defaults.
+#
+# Also shipped in juke-framework.jar (do NOT override in consuming apps):
+#   application-record.yml   — sets juke.mode=record
+#   application-replay.yml   — sets juke.mode=replay
+#
+# Consuming applications override environment settings in their own:
+#   application.yml              — app-level base config
+#   application-local.yml        — local environment paths
+#   application-uat.yml          — UAT environment paths
+#   application-prod.yml         — prod environment (typically disabled)
+#
+# Resolution order (later wins):
+#   1. juke-defaults.yml              (this file, from juke-framework.jar)
+#   2. application.yml                (from the consuming app)
+#   3. application-{profile}.yml      (framework-owned: record, replay)
+#   4. application-{profile}.yml      (app-owned: local, uat, prod)
+#   5. -Djuke.* system properties     (backward-compat escape hatch)
+#
+# Activate profiles via:
+#   -Dspring.profiles.active=local,record
+# ============================================================================
+
+juke:
+  mode: ignore                  # record | replay | ignore | disable
+  path: ""                      # defaults to java.io.tmpdir/juke when empty
+  zip: track                    # ZIP file name (without .zip extension)
+  disabled: false               # master kill-switch
+

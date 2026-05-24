@@ -1,0 +1,5 @@
+# Test-only profile YAML — disabled value is a quoted string (not YAML boolean)
+# This exercises the String branch in JukeConfigLoader.fromMap()
+juke:
+  disabled: "true"
+

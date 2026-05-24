@@ -1,0 +1,36 @@
+# ============================================================================
+# juke-sample-exceptions — base configuration
+# ============================================================================
+# The demo-start-server scripts additionally pass (for the coverage popup):
+#   -javaagent:target/jacoco-agent.jar=output=none      (required for server cov)
+#   -Djuke.coverage.classes=…/target/classes            (required)
+#   -Djuke.coverage.sources=…/src/main/java             (optional, source view)
+#   -Djuke.coverage.report-dir=…/coverage/server
+#   -Djuke.coverage.ui-report-dir=…/coverage/ui
+#   -Djuke.coverage.bundle-name=juke-sample-exceptions
+#
+# Thresholds are deliberately reachable: completing all four runs (record +
+# three replays) exercises both branches of OrderService.placeOrder and the
+# whole UI journey, so the coverage popup's pass/fail badge flips green once the
+# journey is done and stays red if it is abandoned early.
+# ============================================================================
+
+juke:
+  enabled: true
+  path: ${user.home}/juke-demo/sample-exceptions
+  zip: order-demo
+  coverage:
+    enabled: true
+    threshold:
+      server:
+        line: 55
+        # No branch gate: in this sample the only branchy code is the
+        # deliberately-uncovered admin methods (cancelOrder/reconcile), so the
+        # exercised happy/exception paths carry almost no branches to cover.
+        branch: 0
+      ui:
+        lines: 45
+        statements: 45
+
+server:
+  port: 8080

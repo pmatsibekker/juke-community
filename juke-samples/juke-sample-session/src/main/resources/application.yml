@@ -1,0 +1,13 @@
+# ============================================================================
+# juke-sample-session — base configuration
+# ============================================================================
+# Cookie-bound replay sample. The /service/session/start endpoint issues
+# JUKE_SESSION_ID + JUKE_TRACK cookies that are then carried back on every
+# /session-greeting request; the cookie filter resolves them to a per-session
+# replay context.
+# ============================================================================
+
+juke:
+  enabled: true
+  path: ${user.home}/juke/sample-session
+  zip: session-track

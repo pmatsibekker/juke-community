@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>org.juke</groupId>
+    <artifactId>juke-sample-coverage</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>juke-sample-coverage</name>
+    <description>
+        End-to-end demo of juke-coverage — a Spring Boot app with a React SPA
+        that contains both a small user journey (login → pick style → submit
+        greeting) AND a live coverage dashboard. As the user clicks through
+        the journey, the dashboard polls /service/coverage and shows both
+        halves (server-side JaCoCo and UI nyc/Istanbul) climbing in real time.
+    </description>
+
+    <properties>
+        <java.version>25</java.version>
+        <argLine/>
+        <node.version>v22.14.0</node.version>
+        <npm.version>10.9.2</npm.version>
+        <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
+        <!-- Pass -DskipFrontend=true to rebuild Java-only (React build/ must already exist) -->
+        <skipFrontend>false</skipFrontend>
+        <!--
+            Default to a clean, uninstrumented production build. The `coverage`
+            profile flips this to `build:coverage`, which runs the SPA through
+            vite-plugin-istanbul so functional UI coverage can be captured by
+            Playwright (or by manually clicking through the journey while
+            window.__coverage__ accumulates in the browser).
+        -->
+        <npm.build.script>build</npm.build.script>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.juke.harnesss</groupId>
+            <artifactId>juke-framework</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.juke.harnesss</groupId>
+            <artifactId>juke-remix-rest-service</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <!--
+            The point of this sample — opt-in functional code-coverage capability.
+            Carries no runtime cost unless juke.coverage.enabled=true is set
+            (the demo-start-server scripts set it, along with the -javaagent flag);
+            production runs leave both off.
+        -->
+        <dependency>
+            <groupId>org.juke.harnesss</groupId>
+            <artifactId>juke-coverage</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <release>25</release>
+                </configuration>
+            </plugin>
+
+            <!--
+                Build the React UI hermetically (Node + npm installed into
+                ${project.basedir}/.node, isolated from any system install) and
+                bundle the production output into the Spring Boot jar so a single
+                `java -jar` serves both the API at /api/** and the SPA at /.
+            -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend-maven-plugin.version}</version>
+                <configuration>
+                    <workingDirectory>src/main/web-app</workingDirectory>
+                    <installDirectory>${project.basedir}/.node</installDirectory>
+                    <skip>${skipFrontend}</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals><goal>install-node-and-npm</goal></goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <nodeVersion>${node.version}</nodeVersion>
+                            <npmVersion>${npm.version}</npmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-install</id>
+                        <goals><goal>npm</goal></goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- `run build` normally; `run build:coverage` under -Pcoverage. -->
+                        <id>npm-build</id>
+                        <goals><goal>npm</goal></goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run ${npm.build.script}</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                Copy the Vite build output into target/classes/static so Spring
+                Boot serves the SPA at "/" on the same port as the /api/** and
+                /service/** endpoints.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-react-build</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/web-app/dist</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                Copy the JaCoCo runtime agent jar into target/ so the
+                demo-start-server scripts have a stable, machine-independent
+                path for the -javaagent flag. This is the SAME jar
+                juke-coverage reads in-process via RT.getAgent(); here it's
+                just placed where the launch command can point at it.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-jacoco-agent</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy</goal></goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.jacoco</groupId>
+                                    <artifactId>org.jacoco.agent</artifactId>
+                                    <version>0.8.14</version>
+                                    <classifier>runtime</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <destFileName>jacoco-agent.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!--
+            Coverage build edition. Activate with:  mvn package -Pcoverage
+            Builds the React SPA through vite-plugin-istanbul so the running app
+            records functional UI coverage into window.__coverage__. A plain
+            `mvn package` is unaffected and ships a clean, uninstrumented bundle.
+        -->
+        <profile>
+            <id>coverage</id>
+            <properties>
+                <npm.build.script>build:coverage</npm.build.script>
+            </properties>
+        </profile>
+    </profiles>
+</project>

@@ -1,0 +1,27 @@
+{
+  "name": "web-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Juke greeting sample SPA — React + MUI, built with Vite",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:coverage": "vite build --mode coverage",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.14.3",
+    "@mui/material": "^5.14.5",
+    "axios": "^1.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2",
+    "vite-plugin-istanbul": "^6.0.2"
+  }
+}

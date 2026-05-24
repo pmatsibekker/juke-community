@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>org.juke.harnesss</groupId>
+    <artifactId>juke-coverage</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>juke-coverage</name>
+    <description>
+        Opt-in functional code-coverage capability for Juke-driven test runs.
+        Reads the live JaCoCo agent in-process and exposes a coverage report
+        for the application under test. Inert unless juke.coverage.enabled=true,
+        so a single application artifact carries it across local / UAT / prod
+        with zero runtime cost when the property is off and no agent attached.
+    </description>
+
+    <properties>
+        <java.version>25</java.version>
+        <jacoco.version>0.8.14</jacoco.version>
+    </properties>
+
+    <dependencies>
+        <!-- Juke core framework — supplies JukeMockRegistry, the authoritative
+             record of which implementation classes Juke displaced with proxies. -->
+        <dependency>
+            <groupId>org.juke.harnesss</groupId>
+            <artifactId>juke-framework</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <!-- JaCoCo analyzer — turns raw execution data + class files into
+             an IBundleCoverage model. -->
+        <dependency>
+            <groupId>org.jacoco</groupId>
+            <artifactId>org.jacoco.core</artifactId>
+            <version>${jacoco.version}</version>
+        </dependency>
+
+        <!-- JaCoCo report — renders the drill-down HTML report. -->
+        <dependency>
+            <groupId>org.jacoco</groupId>
+            <artifactId>org.jacoco.report</artifactId>
+            <version>${jacoco.version}</version>
+        </dependency>
+
+        <!-- JaCoCo agent (runtime classifier) — provides org.jacoco.agent.rt.RT
+             so the running server can read its OWN coverage in-process. Packaged
+             so the RT class is always present; RT.getAgent() throws a catchable
+             IllegalStateException when no -javaagent is attached. -->
+        <dependency>
+            <groupId>org.jacoco</groupId>
+            <artifactId>org.jacoco.agent</artifactId>
+            <version>${jacoco.version}</version>
+            <classifier>runtime</classifier>
+        </dependency>
+
+        <!-- Web stack is supplied by the host application — juke-coverage only
+             plugs a controller + resource handler into an existing web context. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <release>25</release>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

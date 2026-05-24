@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<!--
+  Combined coverage drill-down for the Juke coverage feature.
+  Served by CoverageReportPageController at GET /coverage.
+
+  Layout:
+    - Top header strip: live numbers fetched from /service/coverage with
+      a pass/fail badge per section
+    - Two iframes side-by-side:
+        left  = /coverage/server/index.html  (JaCoCo HTML drill-down)
+        right = /coverage/ui/index.html      (nyc/Istanbul HTML drill-down)
+    - "Open full" link on each panel pops the original report in a new tab
+      for full-screen inspection
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Juke Coverage — Combined Report</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1f2937;
+      background: #f3f4f6;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top strip ─────────────────────────────────────────────────────── */
+    .top {
+      flex: 0 0 auto;
+      background: #111827;
+      color: #f9fafb;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .top h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .badge {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .badge.pass { background: #16a34a; color: #fff; }
+    .badge.fail { background: #dc2626; color: #fff; }
+    .badge.na   { background: #6b7280; color: #fff; }
+
+    .metrics {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+    .metric {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 80px;
+    }
+    .metric .label { font-size: 0.7rem;  opacity: 0.7; text-transform: uppercase; letter-spacing: 0.4px; }
+    .metric .value { font-size: 1.05rem; font-weight: 600; }
+
+    .group-sep { width: 1px; background: rgba(255,255,255,.18); align-self: stretch; }
+
+    /* ── Iframe area ───────────────────────────────────────────────────── */
+    main {
+      flex: 1 1 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      min-height: 0;  /* lets the iframes fill the column heights */
+    }
+    .panel {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .panel .panel-head {
+      background: #f1f5f9;
+      color: #1f2937;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .panel .panel-head h2 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+    .panel .panel-head .tool { font-size: 0.75rem; color: #6b7280; }
+    .panel .panel-head a { font-size: 0.8rem; color: #2563eb; text-decoration: none; }
+    .panel .panel-head a:hover { text-decoration: underline; }
+    .panel iframe {
+      flex: 1 1 auto;
+      width: 100%;
+      border: 0;
+      background: #fff;
+    }
+    .panel .unavailable {
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+      font-size: 0.9rem;
+      padding: 24px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>Juke Coverage — Combined Report</h1>
+    <span id="overall-badge" class="badge na">Loading…</span>
+
+    <div class="metrics">
+      <div class="metric">
+        <span class="label">Server line</span>
+        <span class="value" id="server-line">—</span>
+      </div>
+      <div class="metric">
+        <span class="label">Server branch</span>
+        <span class="value" id="server-branch">—</span>
+      </div>
+      <div class="metric">
+        <span class="label">Server instruction</span>
+        <span class="value" id="server-instruction">—</span>
+      </div>
+      <div class="group-sep"></div>
+      <div class="metric">
+        <span class="label">UI lines</span>
+        <span class="value" id="ui-lines">—</span>
+      </div>
+      <div class="metric">
+        <span class="label">UI statements</span>
+        <span class="value" id="ui-statements">—</span>
+      </div>
+      <div class="metric">
+        <span class="label">UI branches</span>
+        <span class="value" id="ui-branches">—</span>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Server coverage <span class="tool" id="server-tool">(JaCoCo)</span></h2>
+        </div>
+        <a id="server-link" href="/coverage/server/index.html" target="_blank" rel="noopener">Open full ↗</a>
+      </div>
+      <iframe id="server-frame" src="/coverage/server/index.html" title="Server coverage report"></iframe>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>UI coverage <span class="tool" id="ui-tool">(nyc / Istanbul)</span></h2>
+        </div>
+        <a id="ui-link" href="/coverage/ui/index.html" target="_blank" rel="noopener">Open full ↗</a>
+      </div>
+      <iframe id="ui-frame" src="/coverage/ui/index.html" title="UI coverage report"></iframe>
+    </section>
+  </main>
+
+  <script>
+    /*
+     * Pulls /service/coverage once on load and populates the header strip.
+     * If either half is unavailable, shows a stub in the corresponding panel
+     * instead of leaving an empty iframe.
+     */
+    function fmt(pct) {
+      if (pct === undefined || pct === null) return '—';
+      return Number(pct).toFixed(1) + '%';
+    }
+    function setText(id, value) { document.getElementById(id).textContent = value; }
+    function setBadge(elId, passed) {
+      var el = document.getElementById(elId);
+      if (passed === true)       { el.textContent = 'Pass'; el.className = 'badge pass'; }
+      else if (passed === false) { el.textContent = 'Fail'; el.className = 'badge fail'; }
+      else                       { el.textContent = 'N/A';  el.className = 'badge na'; }
+    }
+    function replaceWithMessage(frameId, message) {
+      var frame = document.getElementById(frameId);
+      var div = document.createElement('div');
+      div.className = 'unavailable';
+      div.textContent = message;
+      frame.parentNode.replaceChild(div, frame);
+    }
+
+    fetch('/service/coverage')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        setBadge('overall-badge', data.passed);
+
+        if (data.server) {
+          if (data.server.tool) setText('server-tool', '(' + data.server.tool + ')');
+          if (data.server.available) {
+            setText('server-line',        fmt(data.server.line));
+            setText('server-branch',      fmt(data.server.branch));
+            setText('server-instruction', fmt(data.server.instruction));
+            if (data.server.reportUrl) {
+              document.getElementById('server-frame').src = data.server.reportUrl;
+              document.getElementById('server-link').href = data.server.reportUrl;
+            }
+          } else {
+            replaceWithMessage('server-frame',
+              'Server coverage unavailable: ' + (data.server.message || 'no data'));
+          }
+        }
+
+        if (data.ui) {
+          if (data.ui.tool) setText('ui-tool', '(' + data.ui.tool + ')');
+          if (data.ui.available) {
+            setText('ui-lines',      fmt(data.ui.lines));
+            setText('ui-statements', fmt(data.ui.statements));
+            setText('ui-branches',   fmt(data.ui.branches));
+            if (data.ui.reportUrl) {
+              document.getElementById('ui-frame').src = data.ui.reportUrl;
+              document.getElementById('ui-link').href = data.ui.reportUrl;
+            }
+          } else {
+            replaceWithMessage('ui-frame',
+              'UI coverage unavailable: ' + (data.ui.message || 'no data'));
+          }
+        }
+      })
+      .catch(function (e) {
+        setBadge('overall-badge', false);
+        console.error('Failed to load /service/coverage:', e);
+      });
+  </script>
+</body>
+</html>

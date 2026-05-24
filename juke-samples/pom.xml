@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.juke</groupId>
+    <artifactId>juke-samples</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>juke-samples</name>
+    <description>
+        Aggregator for the Juke sample applications. Each child module is a
+        self-contained Spring Boot app demonstrating one Juke pattern:
+        record/replay with @Juke, cookie-based session replay, REST CRUD
+        wiring, and annotation usage. Run any sample with
+        `mvn -pl juke-samples/juke-sample-XXX spring-boot:run`.
+    </description>
+
+    <modules>
+        <module>juke-sample-greeting</module>
+        <module>juke-sample-session</module>
+        <module>juke-sample-todo</module>
+        <module>juke-sample-annotations</module>
+        <module>juke-sample-coverage</module>
+        <module>juke-sample-exceptions</module>
+    </modules>
+</project>
