@@ -1,0 +1,6 @@
+# Test-only profile YAML for prod environment
+juke:
+  path: /opt/juke/prod
+  zip: prod-track
+  disabled: true
+

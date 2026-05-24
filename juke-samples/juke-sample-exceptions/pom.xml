@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>org.juke</groupId>
+    <artifactId>juke-sample-exceptions</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>juke-sample-exceptions</name>
+    <description>
+        Exception/fault-flow demo. A React SPA lets a shopper buy a SKU; the
+        order service places three orders with an external Order Management
+        System (OMS) reached through a @Juke seam. Four runs show the same
+        journey under different conditions: (1) record the happy path,
+        (2) deterministic replay, (3) replay with a 10s delay injected on the
+        second order — the UI shows "Your order is queued", and (4) replay with
+        an exception injected on the second order — the UI shows "We are
+        experiencing technical difficulties...". Each order returns a randomly
+        generated confirmation number marked @JukeIgnorable so replay stays a
+        clean deterministic repeat despite the number changing every run.
+        Unit/functional coverage is shown in a separate popup, not on the
+        ordering screen.
+    </description>
+
+    <properties>
+        <java.version>25</java.version>
+        <argLine/>
+        <node.version>v22.14.0</node.version>
+        <npm.version>10.9.2</npm.version>
+        <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
+        <!-- Pass -DskipFrontend=true to rebuild Java-only (React dist/ must already exist) -->
+        <skipFrontend>false</skipFrontend>
+        <!-- `coverage` profile flips this to build:coverage (vite-plugin-istanbul). -->
+        <npm.build.script>build</npm.build.script>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.juke.harnesss</groupId>
+            <artifactId>juke-framework</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.juke.harnesss</groupId>
+            <artifactId>juke-remix-rest-service</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <!-- Functional coverage (server JaCoCo + UI nyc) shown in the popup. -->
+        <dependency>
+            <groupId>org.juke.harnesss</groupId>
+            <artifactId>juke-coverage</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <release>25</release>
+                </configuration>
+            </plugin>
+
+            <!--
+                Build the React UI hermetically (Node + npm installed into
+                ${project.basedir}/.node) and bundle the production output into
+                the jar so a single `java -jar` serves both /api/** and the SPA.
+            -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend-maven-plugin.version}</version>
+                <configuration>
+                    <workingDirectory>src/main/web-app</workingDirectory>
+                    <installDirectory>${project.basedir}/.node</installDirectory>
+                    <skip>${skipFrontend}</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals><goal>install-node-and-npm</goal></goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <nodeVersion>${node.version}</nodeVersion>
+                            <npmVersion>${npm.version}</npmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-install</id>
+                        <goals><goal>npm</goal></goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-build</id>
+                        <goals><goal>npm</goal></goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run ${npm.build.script}</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                The Vite build writes straight into ${project.build.outputDirectory}/static
+                (target/classes/static), so it is bundled into the jar and served at "/"
+                on the same port as /api/** and /service/** with no extra copy step.
+            -->
+
+            <!--
+                Copy the JaCoCo runtime agent jar into target/ so the
+                demo-start-server scripts have a stable path for -javaagent.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-jacoco-agent</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy</goal></goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.jacoco</groupId>
+                                    <artifactId>org.jacoco.agent</artifactId>
+                                    <version>0.8.14</version>
+                                    <classifier>runtime</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <destFileName>jacoco-agent.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- mvn package -Pcoverage  → SPA built with vite-plugin-istanbul. -->
+        <profile>
+            <id>coverage</id>
+            <properties>
+                <npm.build.script>build:coverage</npm.build.script>
+            </properties>
+        </profile>
+    </profiles>
+</project>

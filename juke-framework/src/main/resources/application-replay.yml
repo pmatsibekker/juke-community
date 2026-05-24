@@ -1,0 +1,11 @@
+# ============================================================================
+# Juke Framework — REPLAY Mode Profile
+# ============================================================================
+# Ships inside juke-framework.jar. Consuming apps should NOT override this.
+#
+# Activate: -Dspring.profiles.active=local,replay
+# ============================================================================
+
+juke:
+  mode: replay
+

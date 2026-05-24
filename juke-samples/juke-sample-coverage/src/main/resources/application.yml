@@ -1,0 +1,34 @@
+# ============================================================================
+# juke-sample-coverage — base configuration
+# ============================================================================
+# The demo-start-server scripts additionally pass:
+#   - -javaagent:target/jacoco-agent.jar=output=none   (required for server cov)
+#   - -Djuke.coverage.classes=…/target/classes        (required)
+#   - -Djuke.coverage.sources=…/src/main/java          (optional, enables source view)
+#   - -Djuke.coverage.report-dir=…/coverage/server
+#   - -Djuke.coverage.ui-report-dir=…/coverage/ui
+#   - -Djuke.coverage.bundle-name=juke-sample-coverage
+#
+# Why thresholds are deliberately reachable: a complete user journey through
+# the UI (login → pick formal → submit → pick casual → submit) walks roughly
+# 70-80% of the server lines and 60-70% of the UI lines. Set them at the
+# lower end so the `passed` badge in the dashboard flips green when the user
+# finishes the flow, and stays red if they bail early.
+# ============================================================================
+
+juke:
+  enabled: true
+  path: ${user.home}/juke-demo/sample-coverage
+  zip: coverage-demo
+  coverage:
+    enabled: true
+    threshold:
+      server:
+        line: 65
+        branch: 50
+      ui:
+        lines: 55
+        statements: 55
+
+server:
+  port: 8080

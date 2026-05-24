@@ -1,0 +1,11 @@
+# ============================================================================
+# juke-sample-todo — base configuration
+# ============================================================================
+# REST CRUD sample. Activate record/replay through the /service/* endpoints
+# at runtime — no profile switches required.
+# ============================================================================
+
+juke:
+  enabled: true
+  path: ${user.home}/juke/sample-todo
+  zip: todo-track

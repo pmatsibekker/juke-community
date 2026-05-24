@@ -1,0 +1,13 @@
+# ============================================================================
+# juke-sample-annotations — base configuration
+# ============================================================================
+# Wiring reference. No HTTP surface, no record/replay scenario — Juke is
+# enabled so the @Juke-annotated fields are actually wrapped on startup;
+# attach a debugger and step through JukeBeanPostProcessor if you want to
+# see it happen.
+# ============================================================================
+
+juke:
+  enabled: true
+  path: ${java.io.tmpdir}
+  zip: annotations-reference

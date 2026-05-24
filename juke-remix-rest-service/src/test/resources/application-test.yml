@@ -1,0 +1,16 @@
+## ────────────────────────────────────────────────────────────────────
+## juke-remix-rest-service test profile
+##
+## Phase 5.B reduced this file to framework / web-only bits. JPA /
+## DataSource / Flyway / H2 sections moved to
+## juke-scenario-service/src/test/resources/application-test.yml when
+## the persistence layer relocated to that module.
+##
+## juke.scheduling.enabled / juke.run-reaper.enabled were removed in
+## §5.0 step 4 alongside RunReaper and JukeSchedulingConfiguration.
+## ────────────────────────────────────────────────────────────────────
+juke:
+  enabled: true       # master toggle: integration tests need the /service/* + session beans wired
+  zip:
+    base-path: ./recordings
+  ui-harness: none

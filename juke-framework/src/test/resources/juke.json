@@ -1,0 +1,47 @@
+{
+	"className":"org.juke.framework.support.ISampleService",
+	"methods":[{
+		
+	"method":"getMyDataMapAsList",
+	"inputParameters":[
+		{
+		"className":"java.math.BigDecimal",
+		"isArray":true
+		},
+		{
+		"className":"java.lang.String"
+		}
+		
+	],
+	"outputResult":
+		{
+			"className":"java.util.List",
+			"isParameterized": true,
+			"parameters":[
+				{
+					"className":"java.util.HashMap",
+					"isParameterized": true,
+					"parameters":[
+					{
+						"className":"java.lang.String"				
+					
+					},
+					{
+						"className":"java.math.BigDecimal"	
+							
+					}
+				]
+			
+				}
+				]
+			
+		}
+		
+		
+		
+	
+	}
+	
+	]
+	
+}

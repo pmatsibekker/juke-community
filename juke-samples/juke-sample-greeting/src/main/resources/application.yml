@@ -1,0 +1,15 @@
+# ============================================================================
+# juke-sample-greeting — base configuration
+# ============================================================================
+# Examples opt into Juke explicitly via juke.enabled. Production environments
+# leave it off (the master toggle is false by default), so the wiring is
+# invisible unless you ask for it.
+#
+# Activate record/replay through the REST API once the app is running — see
+# juke-samples/README.md for the curl recipe.
+# ============================================================================
+
+juke:
+  enabled: true
+  path: ${user.home}/juke/sample-greeting
+  zip: greeting-track

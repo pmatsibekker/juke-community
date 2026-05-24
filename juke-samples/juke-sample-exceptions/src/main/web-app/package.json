@@ -1,0 +1,23 @@
+{
+  "name": "juke-sample-exceptions-web",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Juke exception-flow demo SPA — SKU order journey with fault popups + a separate coverage popup, built with Vite",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:coverage": "vite build --mode coverage",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2",
+    "vite-plugin-istanbul": "^6.0.2"
+  }
+}

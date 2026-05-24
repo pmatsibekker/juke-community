@@ -1,0 +1,4 @@
+org.juke.framework.config.JukeConfiguration
+org.juke.framework.config.JukeWebConfiguration
+org.juke.framework.config.JukeStorageAutoConfiguration
+

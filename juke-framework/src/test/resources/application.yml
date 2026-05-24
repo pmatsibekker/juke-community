@@ -1,0 +1,5 @@
+# Test-only application.yml — simulates a consuming app's base config
+# This overrides juke-defaults.yml from the framework
+juke:
+  zip: app-override-track
+

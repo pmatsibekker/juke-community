@@ -1,0 +1,15 @@
+{
+  "name": "juke-demo-playwright",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright visual demo for the Juke record/replay walk-through",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.52.0",
+    "nyc": "^17.1.0"
+  }
+}

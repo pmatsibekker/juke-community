@@ -1,0 +1,5 @@
+# Test-only profile YAML for local environment
+juke:
+  path: ${user.home}/juke/local
+  zip: local-track
+

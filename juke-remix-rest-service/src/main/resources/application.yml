@@ -1,0 +1,11 @@
+## ────────────────────────────────────────────────────────────────────
+## juke-remix-rest-service defaults
+##
+## Phase 5.B reduced this file to framework-only / web-only bits. The
+## JPA / DataSource / Flyway / H2 sections moved to
+## juke-scenario-service/src/main/resources/application.yml when the
+## persistence layer relocated to that module.
+## ────────────────────────────────────────────────────────────────────
+juke:
+  zip:
+    base-path: ./recordings       # Fallback filesystem path for recordings (test-time use)
