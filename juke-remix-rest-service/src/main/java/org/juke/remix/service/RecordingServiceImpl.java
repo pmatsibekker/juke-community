@@ -5,6 +5,7 @@ import org.juke.framework.proxy.JukeFactory;
 import org.juke.framework.proxy.JukeState;
 import org.juke.framework.storage.JukeHelper;
 import org.juke.framework.storage.JukeZipDAOImpl;
+import org.juke.remix.aspect.JukeControllerAdvice;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,9 @@ public class RecordingServiceImpl implements RecordingService {
         // The recording service must put the runtime in RECORD mode (parity
         // with ReplayServiceImpl, which correctly uses JukeState.REPLAY).
         JukeFactory.setGlobaljuke(JukeState.RECORD);
+
+        // Each recording starts a fresh sidecar sequence ({Class}.{method}.1.json …).
+        JukeControllerAdvice.resetCounters();
 
         // KI-3 fix: honour the track URL parameter so the bundle name matches
         // what the caller asked for. Falls back to the configured juke.zip,

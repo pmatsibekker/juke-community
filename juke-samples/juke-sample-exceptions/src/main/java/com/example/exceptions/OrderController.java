@@ -1,5 +1,6 @@
 package com.example.exceptions;
 
+import org.juke.framework.annotation.JukeController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,7 @@ import java.util.List;
  * <p>The {@code /service/*} control surface (record/replay/session/remix/
  * coverage) is contributed by the Remix and coverage modules on the same origin.
  */
+@JukeController
 @RestController
 @RequestMapping("/api")
 public class OrderController {

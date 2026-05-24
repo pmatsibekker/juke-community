@@ -1,5 +1,6 @@
 package com.example.coverage;
 
+import org.juke.framework.annotation.JukeController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ import java.util.List;
  * <p>The {@code /service/coverage} family is exposed automatically by the
  * {@code juke-coverage} module and lives on the same origin.
  */
+@JukeController
 @RestController
 @RequestMapping("/api")
 public class GreetingController {

@@ -1,6 +1,7 @@
 package com.example.session;
 
 import org.juke.framework.annotation.Juke;
+import org.juke.framework.annotation.JukeController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
  * service while contexts holding Juke session cookies replay deterministic
  * recordings.
  */
+@JukeController
 @RestController
 public class SessionGreetingController {
 

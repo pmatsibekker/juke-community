@@ -83,8 +83,19 @@ then backed by a passing test (full `juke-framework` suite green):
 - `@JukeIgnorable` was effectively a **no-op in Community session replay** because the
   session handler compared args with `String.valueOf` and never consulted the annotation.
   (Fixed now, but the lesson stands.)
+- `@JukeController` request/response diffs were silently no-ops in **cookie-session replay**:
+  the advice gated on `JukeRuntimeHolder.current().mode()`, which session-start never flips
+  (only `/service/replay/start` does). Sidecars wrote fine during global RECORD but never got
+  compared on session-driven REPLAY runs — a *clean* replay looked just like a *poisoned* one.
+  Fixed by also checking `JukeSessionContext.isPlaybackActive()` and reading baselines from the
+  per-session DAO.
+- Adjacent gotcha when fixing the above: `JukeStorage.asString(id)` auto-appends `.json` while
+  `writeDirectEntry(key, content)` takes the full filename. Pass `asString` the identifier
+  *without* the `.json` suffix or every lookup silently misses.
 - **Do:** write a tiny assertion that the annotation/feature actually changes behavior in the
-  exact mode the sample uses (global vs session replay), rather than trusting the README.
+  exact mode the sample uses (global vs session replay), rather than trusting the README. A
+  good shape: an intentionally-poisoned replay call that should produce a `CONTROLLER_MISMATCH`
+  line and a corresponding clean call that should not.
 
 ### 2.2 The Remix `classAndMethodSequence` format is the *short* name
 - Public docs/comments show several forms. The **current** recorder writes short names, so the
