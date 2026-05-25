@@ -33,7 +33,7 @@ public class JukeAnnotationExample {
 
     // (2) Method-level: the annotation processor wraps the return value
     //     with JukeFactory on the way out.
-    @Juke("juke")
+    @Juke
     public IGreetingsService getWrappedGreetingService() {
         return this.greetingService;
     }

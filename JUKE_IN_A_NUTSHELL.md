@@ -85,7 +85,7 @@ The book is deliberately layered. **Part I** builds understanding from the
 top down: each chapter opens with the general idea and why it matters, then
 descends into nuance. Read it front to back the first time.
 
-- **Chapter 1** makes the case for Juke and surveys the distribution.
+- **Chapter 1** makes the case for Juke: unit versus behavioral testing, why whole-system journeys matter, why AI-written unit suites can drift, and where Juke fits.
 - **Chapter 2** gets a recording replaying in five minutes.
 - **Chapter 3** explains the mental model — the interception seam, the modes,
   the recording.
@@ -153,51 +153,173 @@ result is a deterministic test fixture made of *real* data: UI tests,
 integration tests, and CI pipelines all see byte-identical responses run after
 run, regardless of what the underlying upstream system is doing.
 
-Juke is two ideas working together:
+At a high level, Juke does two things: it captures real upstream behavior, and
+it replays that behavior deterministically later. Everything else in this book
+— seams, modes, sessions, storage, and reports — is detail hanging off those
+two ideas.
 
-- A small set of **annotations** — `@Juke`, `@JukeController`, `@JukeIgnorable`
-  — that mark which beans to intercept.
-- A **mode flag** — `record` / `replay` / `ignore` — that decides what the
-  interceptor does.
+## 1.2 Unit Testing and Behavioral Testing
 
-Everything else in this book is detail hanging off those two ideas.
+The central testing tradeoff is simple: **unit tests give control**, while
+**behavioral tests give truth**.
 
-## 1.2 Why Juke
+**Unit tests** isolate one class or function at a time. They are fast, precise,
+and excellent for pinning down small rules, edge cases, and regressions in code
+you already understand. They fail close to the source of a defect, they are
+cheap to run in large numbers, and they make refactoring safer when the
+behavior is already well-specified.
 
-Unit-testing frameworks (Mockito, EasyMock) and stub/behaviour tools
-(WireMock, MockServer, Spring Cloud Contract) all make you *author the fake
-yourself*. You write `when(…).thenReturn(…)`, you hand-craft stub JSON, or you
-maintain a separate contract file. That fake is only ever a guess about what
-the real upstream does; it is boilerplate to write and own; and it drifts
-silently out of sync the moment the upstream changes.
+Their weakness is that they depend on *authored substitutes* for the rest of
+the system: mocks, stubs, fixtures, and expectations. That makes them only as
+good as the author's understanding of the surrounding behavior. If the mental
+model is incomplete, the test is incomplete in the same way. Unit tests are
+therefore strongest as a guardrail around local logic, and weakest as proof
+that the whole feature works as a user experiences it.
 
-Juke removes the fake entirely. Four properties follow:
+**Behavioral tests** start from the opposite end. They drive the system through
+an externally visible flow and judge success by the outcome a user or caller
+actually sees. Their great strength is independence: they do not need to know
+how the system is implemented internally to tell you whether the promised
+behavior is present. They are the best tool for catching mismatches at seams —
+between UI and server, controller and service, service and upstream, or one
+runtime environment and another.
 
-**Nothing to author or maintain.** One annotation — `@Juke` — and the test
-data is captured from the real upstream. No `when/thenReturn`, no stub files,
-no contract authoring, nothing to keep in sync.
+Their weakness is operational. Real behavioral tests are often slow, brittle,
+hard to set up, and expensive to keep reliable because they depend on live
+upstreams, mutable test data, network timing, and shared environments. In
+practice, teams often settle for many unit tests and only a small number of
+true end-to-end journeys, even though the journeys are the tests that answer
+the most important question: *does the feature actually work?*
 
-**Real data, not assumptions.** A recording *is* the upstream's genuine
-response — its real edge cases, nulls, and encodings included. A hand-written
-mock returns only what its author imagined; a Juke recording returns what the
-system actually produced.
+## 1.3 How Juke Bridges the Gap
 
-**It exercises your real code.** A Mockito mock replaces the whole bean, so
-your serialization, retry logic, circuit breakers, and the Spring proxy chain
-never run under test. Juke replaces *only* the I/O at the upstream edge —
-every line of your own code on the path still executes. That is what makes a
-Juke replay a genuine *behavioural* test rather than a unit-isolated one.
+Juke exists because teams should not have to choose between the *speed and
+control* of unit tests and the *truthfulness* of behavioral tests.
 
-**Deterministic and parallel-safe.** Replay is byte-identical on every run,
-which removes the root cause of flaky tests; and cookie-scoped sessions let
-many test workers each replay a different recording against a single JVM with
-no shared state.
+It bridges that gap by splitting the problem in two:
+
+1. **Record once against reality.** Drive a real use case through the running
+   system and capture what the upstreams actually returned.
+2. **Replay many times deterministically.** Re-run that same use case against
+   the captured interactions, with no live upstream dependency.
+
+That combination preserves what matters from both worlds.
+
+- From **behavioral testing**, Juke keeps the real code path, real data, and a
+  validator anchored to what a user actually drove.
+- From **unit-style testing**, Juke keeps repeatability, speed, isolation from
+  unstable external systems, and suitability for CI.
+
+The result is a test that is not built around a hand-written fake, yet is also
+not hostage to the unpredictability of live environments. Recordings turn real
+behavior into a deterministic asset. That is Juke's core idea.
 
 > **Note** — Put plainly: Mockito tests your code against *your assumptions*,
 > WireMock tests it against *a stub you maintain*, and Juke tests it against
-> *what the real system actually did*.
+> *what the real system actually did*. A passing Juke journey is therefore
+> stronger evidence than a passing unit test, while still being stable enough
+> to run repeatedly as part of normal development.
 
-## 1.3 Where Juke Fits
+## 1.4 Why the Whole System Matters
+
+Modern applications do not keep their logic neatly on one side of the boundary.
+Validation, retries, feature flags, formatting, optimistic updates, loading
+states, fallback behavior, permission checks, and error handling are often
+distributed across browser code and server code together. The user experiences
+the *composition* of those pieces, not either side in isolation.
+
+That is why testing the UI and the server as separate concerns is increasingly
+insufficient. A server unit test can prove that an endpoint returns a field; a
+UI unit test can prove that a component renders a field; neither proves that
+the right data crosses the boundary, at the right time, in the right shape,
+under the right real-world conditions.
+
+Whole-system behavioral testing answers a different question: not "did the UI
+logic pass?" and not "did the server logic pass?" but **"did the user journey
+work?"** That is the level at which many expensive bugs actually live.
+
+This does not make unit tests obsolete. It changes their role. Unit tests are
+best for local correctness; whole-system behavioral tests are best for feature
+correctness. You need both — but if forced to choose which one should carry the
+stronger claim about whether the product works, the answer is the test that
+drives the product the way its users do.
+
+## 1.5 The AI-Test Trap
+
+AI coding assistants make this structural weakness acute. A model that writes
+both the implementation *and* the test does so from the same internal
+representation of what the code should do. The test then passes not because
+the behavior is correct, but because the assertion was written to match the
+behavior the model already had in mind. **Green means "the code does what I
+thought," which is circular.** The more capable the model, the more
+convincingly self-consistent — and self-confirming — the test suite becomes.
+
+Every unit test has two halves: the code that exercises the system, and the
+*validator* that says what "correct" means. When both halves come from the same
+source, you are not testing the code against an independent standard; you are
+photographing the current behavior at high resolution. That photograph can look
+exactly like a passing test suite while hiding real bugs.
+
+**Thought experiment 1 — the missing mapping.** An AI writes a `PricingService`
+that applies a 10% discount for premium users, then writes a unit test that
+mocks the premium flag and asserts the discount is applied. Green. But when you
+record a real premium user's session, the real code runs against real data with 
+an unexpected coding — and the discount never appears in the recorded response. 
+The bug is visible the moment you capture it. Unit tests: green. Real behavior: wrong.
+
+**Thought experiment 2 — drift masked by test maintenance.** Later, the AI is
+asked to add caching to `PricingService`. Its context is narrowly focused on
+making the cache work. To do that cleanly, it adjusts how the discount
+calculation is invoked. The existing discount test now fails — not because the
+discount is broken, but because the invocation path changed. The AI fixes the
+test to match the new path. Green again. What it didn't reason about: the old
+invocation path had a side effect that fee-audit logging depended on. Audit
+records for premium discounts now silently disappear. No test ever asserted on
+audit-log completeness — the original author "knew" the discount method would
+always be called directly, so they never thought to guard it.
+
+This is **model drift masked by test maintenance**. The mental model shifts
+incrementally with each task, tests are updated to match the new model, and the
+suite stays green while the system's actual contract with its users quietly
+erodes. Three properties make it structural:
+
+1. **Tests are updated, not just added** — passing green is restored, not earned.
+2. **The validator is the author** — no independent behavioral anchor exists to veto the drift.
+3. **Each step is locally reasonable** — no single change looks wrong; only the
+   cumulative delta against real behavior reveals it.
+
+**Why code review doesn't catch it.** The natural safety net — a human reviewer
+spotting the drift — erodes under AI-assisted velocity. Each individual change
+is small, locally reasonable, and arrives with green tests as evidence of
+correctness. A reviewer assessing a caching change sees clean code, a passing
+build, and a test suite that grew by two tests. They are not in a position to
+reconstruct the cumulative delta against the system's original behavioral
+contract from that diff alone. At scale, review becomes an audit of style and
+structure, not a check on semantic correctness. The logical drift is spread
+across dozens of small PRs, invisible in any single one, and only visible in
+aggregate — which no reviewer ever reads as an aggregate.
+
+This is not a failure of discipline or attention. It is a structural consequence
+of high-velocity AI-assisted development: the rate of change outpaces the
+bandwidth of human comprehension applied diff-by-diff. The only gate that scales
+with that velocity is an independent validator that never reads the diffs at all —
+it just asks whether the system still delivers what it promised.
+
+**A behavioral journey is that validator.** It is an independent flow driven
+end-to-end, asserting on a user-visible outcome. Nobody updated it when the
+implementation changed — it still asserts what the system *promised*. That is
+why it can disagree with the code, and disagreement is exactly the signal
+you want.
+
+The defensible validation gate is therefore:
+
+> *Full build green* **+** *behavioral journeys passing*
+
+Unit tests guard against regressions in behavior you already understand. The
+behavioral journey tells you whether the behavior was ever right to begin with
+— and whether it has quietly drifted since.
+
+## 1.6 Where Juke Fits
 
 ```
 ┌──────────────────┐       ┌──────────────────────┐       ┌────────────────┐
@@ -218,7 +340,7 @@ no shared state.
 Juke does not replace Playwright, JUnit, or your CI system — it sits beneath
 them, supplying the server-side data layer they have always had to fake.
 
-## 1.4 The Juke Distribution
+## 1.7 The Juke Distribution
 
 The Community distribution is four Apache 2.0 jars, plus an optional fifth:
 
@@ -234,7 +356,7 @@ The Enterprise modules — `juke-scenario-service` (JPA persistence,
 database-backed storage), `juke-admin-server`, and the `juke-admin-ui` SPA —
 are strict additions; nothing in Community changes when you bring them in.
 
-## 1.5 How Juke Compares
+## 1.8 How Juke Compares
 
 | Capability | Juke | Mockito | WireMock | Spring Cloud Contract |
 |---|:--:|:--:|:--:|:--:|
