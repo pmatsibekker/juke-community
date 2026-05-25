@@ -1,9 +1,9 @@
-"""Render JUKE_IN_A_NUTSHELL.md to JUKE_IN_A_NUTSHELL.pdf.
+"""Render JUKE_MANUAL.md to JUKE_MANUAL.pdf.
 
 Uses xhtml2pdf + Pygments for syntax-highlighted, Unicode-clean output.
 
 Standalone, idempotent. Run from repo root:
-    python build_nutshell_pdf.py
+    python build_manual_pdf.py
 """
 from __future__ import annotations
 
@@ -19,8 +19,8 @@ from xhtml2pdf import default as x2p_default
 from xhtml2pdf import pisa
 
 REPO = Path(__file__).resolve().parent
-SRC = REPO / "JUKE_IN_A_NUTSHELL.md"
-DST = REPO / "JUKE_IN_A_NUTSHELL.pdf"
+SRC = REPO / "JUKE_MANUAL.md"
+DST = REPO / "JUKE_MANUAL.pdf"
 WIN_FONTS = Path("C:/Windows/Fonts")
 
 
@@ -213,7 +213,7 @@ em { color: inherit; }
 
 FOOTER = (
     '<div id="footerContent" class="footer">'
-    'Juke in a Nutshell &mdash; Early Release &middot; Covers Juke 0.0.1 &middot; Page '
+    'Juke Manual &middot; Covers Juke 0.0.1 &middot; Page '
     '<pdf:pagenumber /> of <pdf:pagecount />'
     '</div>'
 )

@@ -366,7 +366,7 @@ The full lineup:
 |---|---|
 | `juke-samples/juke-sample-greeting` | Basic record/replay against a Spring REST controller via `@Juke`-annotated DAO, with an integrated React UI |
 | `juke-samples/juke-sample-session` | Cookie-bound per-session replay; Playwright cookie-isolation specs included |
-| `juke-samples/juke-sample-todo` | REST CRUD wired through a `@Juke("juke")` DAO |
+| `juke-samples/juke-sample-todo` | REST CRUD wired through a `@Juke` DAO |
 | `juke-samples/juke-sample-annotations` | Reference for field-, method-, and constructor-level `@Juke` usage |
 | `juke-samples/juke-sample-coverage` | Live functional-coverage dashboard (JaCoCo server + nyc/Istanbul UI) that updates as you click through a journey |
 | `juke-samples/juke-sample-exceptions` | Exception/latency flows: record → replay → replay+delay ("queued") → replay+exception ("technical difficulties"), with `@JukeIgnorable` confirmation numbers and a coverage popup |
@@ -459,7 +459,7 @@ For a detailed technical deep-dive, see [DESIGN_ANALYSIS.md](DESIGN_ANALYSIS.md)
 ## 📖 Further Reading
 
 - [COMMUNITY_GUIDE.md](COMMUNITY_GUIDE.md) — Complete reference for annotations, modes, sessions, Remix, coverage, and configuration
-- [JUKE_IN_A_NUTSHELL.md](JUKE_IN_A_NUTSHELL.md) — O'Reilly-style desk reference; good starting point for a structured read-through
+- [JUKE_MANUAL.md](JUKE_MANUAL.md) — desk-reference manual; good starting point for a structured read-through
 - [juke-samples/DEMO.md](juke-samples/DEMO.md) — 15-minute copy-pasteable walkthrough of all key flows
 - [juke-coverage/README.md](juke-coverage/README.md) — Functional test coverage setup, API reference, and configuration
 - [DESIGN_ANALYSIS.md](DESIGN_ANALYSIS.md) — Full architectural deep-dive with class inventory and data flow diagrams

@@ -185,5 +185,5 @@ See [`COMMUNITY_GUIDE.md §5`](../COMMUNITY_GUIDE.md) for the full key reference
 ## Further reading
 
 - [`COMMUNITY_GUIDE.md`](../COMMUNITY_GUIDE.md) — full reference for annotations, modes, sessions, Remix, coverage, and configuration
-- [`JUKE_IN_A_NUTSHELL.md`](../JUKE_IN_A_NUTSHELL.md) — O'Reilly-style desk reference
+- [`JUKE_MANUAL.md`](../JUKE_MANUAL.md) — desk-reference manual
 - [`juke-coverage/README.md`](../juke-coverage/README.md) — functional test coverage setup and API reference

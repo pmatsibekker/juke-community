@@ -35,7 +35,7 @@ public class GreetingController {
 @RestController
 public class GreetingController {
     @Autowired
-    @Juke("juke")  // Automatically wrapped by Spring
+    @Juke  // Automatically wrapped by Spring (default value is "juke")
     private IGreetingsService service;
 
     @PostConstruct  
@@ -69,9 +69,9 @@ public class Car {
 ```java
 @Component
 public class Car {
-    @Juke("juke") 
+    @Juke
     private Engine engine;
-    @Juke("juke") 
+    @Juke
     private Transmission transmission;
     
     @Autowired
@@ -87,7 +87,7 @@ public class Car {
 ```java
 @Component
 public class ServiceExample {
-    @Autowired @Juke("juke")    // Uses JukeState.JUKE
+    @Autowired @Juke              // Default value "juke" -> JukeState.JUKE
     private IGreetingsService greetingService;
     
     @Autowired @Juke("replay")  // Uses JukeState.REPLAY  

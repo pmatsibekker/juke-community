@@ -10,7 +10,7 @@ One recording, many concurrent replay sessions. The seam is an interface field
 recorded globally and replayed per cookie session:
 
 ```java
-@Juke("juke")
+@Juke
 @Autowired
 GreetingService greetingService;     // GreetController
 ```
@@ -23,7 +23,7 @@ GreetingService greetingService;     // GreetController
   is (cursor position / total recorded calls), so the grid can show progress
   bars for workers at different positions.
 
-> `@Juke("juke")` on an **interface** field records globally and replays
+> `@Juke` on an **interface** field records globally and replays
 > **per session**, so this sample records once via `/service/record/*` and then
 > replays through cookie sessions via `/service/session/*`.
 

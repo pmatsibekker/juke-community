@@ -1,13 +1,14 @@
 @echo off
 :: =============================================================================
-::  Juke Demo — Run the Playwright visual demo
+::  Juke Manual — Build PDF from JUKE_MANUAL.md
 ::
 ::  Prerequisites:
-::    1. demo-start-server.bat is running in another window
-::    2. Server has printed "Started GreetingApplication"
+::    Python 3.x on PATH
 ::
 ::  Double-click this file, or run it from any terminal.
+::  Dependencies are installed automatically from requirements.txt.
 :: =============================================================================
 setlocal
-python build_nutshell_pdf.py
+pip install -r requirements.txt
+python build_manual_pdf.py
 endlocal

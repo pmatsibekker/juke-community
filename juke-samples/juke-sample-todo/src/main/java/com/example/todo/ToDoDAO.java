@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * DAO / service-boundary layer for ToDo operations.
  *
- * <p>The {@code @Juke("juke")} annotation on the {@code todoService}
+ * <p>The {@code @Juke} annotation on the {@code todoService}
  * field tells the framework to intercept every call made through this
  * reference:
  * <ul>
@@ -28,7 +28,7 @@ import java.util.Optional;
 @Service
 public class ToDoDAO {
 
-    @Juke("juke")
+    @Juke
     IToDoService todoService;
 
     @Autowired
