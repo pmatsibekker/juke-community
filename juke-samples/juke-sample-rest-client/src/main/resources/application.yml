@@ -1,0 +1,27 @@
+# ============================================================================
+# juke-sample-rest-client — base configuration
+# ============================================================================
+# Concrete-field @Juke over two RestTemplate seams. Drive record/replay through
+# the /service/* endpoints at runtime (global mode — the concrete path is not
+# cookie-session-aware).
+# ============================================================================
+
+juke:
+  enabled: true
+  path: ${user.home}/juke/sample-rest-client
+  zip: rest-client-track
+
+sample:
+  upstream:
+    # The (co-located) stub upstream the RestTemplate seams call.
+    base-url: http://localhost:8080
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration

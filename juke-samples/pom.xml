@@ -24,5 +24,6 @@
         <module>juke-sample-annotations</module>
         <module>juke-sample-coverage</module>
         <module>juke-sample-exceptions</module>
+        <module>juke-sample-rest-client</module>
     </modules>
 </project>
