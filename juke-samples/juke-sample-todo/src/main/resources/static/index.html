@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Juke — ToDo (record / session replay / drift detection)</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f4f6fb; color: #1a1a1a; }
+    header { background: #1d3557; color: #fff; padding: 18px 28px; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; opacity: .85; font-size: 13px; }
+    main { max-width: 960px; margin: 24px auto; padding: 0 20px 40px; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .card { background: #fff; border: 1px solid #d8dee9; border-radius: 8px; padding: 16px 18px; flex: 1; min-width: 260px; margin-bottom: 16px; }
+    .card h2 { margin: 0 0 10px; font-size: 13px; color: #2a4a6b; text-transform: uppercase; letter-spacing: .04em; }
+    button { background: #2a6df4; color: #fff; border: 0; border-radius: 6px; padding: 9px 14px; font-size: 14px; cursor: pointer; margin-right: 8px; }
+    button.secondary { background: #5b6b82; } button.warn { background: #b00020; } button.success { background: #1a7f37; }
+    button:disabled { opacity: .5; cursor: default; }
+    input[type=text] { padding: 8px 10px; border: 1px solid #c8d0dc; border-radius: 6px; font-size: 14px; width: 260px; }
+    .mode-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; color: #fff; background: #5b6b82; }
+    .mode-pill.recording { background: #b58105; }
+    .mode-pill.session   { background: #1a7f37; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; color: #fff; }
+    .badge.ok   { background: #1a7f37; }
+    .badge.bad  { background: #b00020; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eef0f5; vertical-align: top; }
+    th { background: #f4f6fb; font-weight: 600; }
+    td.mono, .mono { font-family: Consolas, monospace; font-size: 12px; }
+    .diff-bad { background: #ffe1e1; }
+    .todo-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px dashed #eef0f5; }
+    .todo-row.done .title { text-decoration: line-through; color: #888; }
+    .note { font-size: 12.5px; color: #555; }
+    #log { font-family: Consolas, monospace; font-size: 12px; color:#444; white-space: pre-wrap; margin: 0; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>ToDo — record, session-replay, and visible drift detection</h1>
+  <p>The <code>@Juke</code> seam on <code>ToDoDAO.todoService</code> records every call.
+     A cookie session can then replay the same track — and if the UI sends an
+     <em>inconsistent</em> input the per-session report flags the deviation.
+     The controller is also <code>@JukeController</code>, so request/response are captured at the boundary.</p>
+</header>
+<main>
+  <!-- ── Mode + recorder controls ─────────────────────────────────────────── -->
+  <div class="card">
+    <div style="margin-bottom:10px;">
+      Mode: <span id="modePill" class="mode-pill">live</span>
+      &nbsp;Track: <code id="trackName">todo-ui</code>
+    </div>
+    <button id="btnRecStart" onclick="recordStart()">1 · Start recording</button>
+    <button id="btnRecStop"  class="secondary" onclick="recordStop()" disabled>Stop recording</button>
+    &nbsp;|&nbsp;
+    <button id="btnSesStart" class="success" onclick="sessionStart()">2 · Start replay session</button>
+    <button id="btnSesStop"  class="secondary" onclick="sessionStop()" disabled>Stop session &amp; show report</button>
+    &nbsp;|&nbsp;
+    <button id="btnReset" class="warn" onclick="reset()">Reset (clear todos)</button>
+    <p class="note" style="margin-top:10px;">
+      <b>Suggested journey:</b>
+      (1) Start recording → use the form below to add two todos
+      (e.g. <code>Buy milk</code>, <code>Buy bread</code>) → Stop recording.
+      (2) Start a replay session → add the <em>same</em> two titles for a clean run,
+      <b>or change one of them</b> (e.g. <code>Buy oats</code>) to trigger drift.
+      → Stop session — the report panel highlights the deviation.
+    </p>
+  </div>
+
+  <!-- ── ToDo CRUD ────────────────────────────────────────────────────────── -->
+  <div class="row">
+    <div class="card">
+      <h2>Add a todo (drives POST /todos)</h2>
+      <input type="text" id="newTitle" placeholder="e.g. Buy milk" data-testid="new-title"/>
+      <button id="btnAdd" onclick="addTodo()" data-testid="btn-add">Add</button>
+    </div>
+    <div class="card">
+      <h2>Current todos (GET /todos)</h2>
+      <div id="todos" data-testid="todo-list">…loading…</div>
+    </div>
+  </div>
+
+  <!-- ── Session report ───────────────────────────────────────────────────── -->
+  <div class="card">
+    <h2>Session report (GET /service/recording/report?track=…)</h2>
+    <p class="note" id="reportEmpty">No session has completed yet. Run a replay session above to populate this panel.</p>
+    <div id="report"></div>
+  </div>
+
+  <!-- ── Log ──────────────────────────────────────────────────────────────── -->
+  <div class="card">
+    <h2>Activity log</h2>
+    <pre id="log" data-testid="log"></pre>
+  </div>
+</main>
+
+<script>
+const TRACK = 'todo-ui';
+const $ = id => document.getElementById(id);
+const log = m => { $('log').textContent += m + '\n'; };
+
+let mode = 'live'; // 'live' | 'recording' | 'session'
+
+function setMode(m) {
+  mode = m;
+  const pill = $('modePill');
+  pill.textContent = m;
+  pill.className = 'mode-pill ' + (m === 'live' ? '' : m);
+  $('btnRecStart').disabled = (m !== 'live');
+  $('btnRecStop').disabled  = (m !== 'recording');
+  $('btnSesStart').disabled = (m !== 'live');
+  $('btnSesStop').disabled  = (m !== 'session');
+  $('btnReset').disabled    = (m !== 'live');
+}
+
+async function refreshTodos() {
+  try {
+    const r = await fetch('/todos');
+    const list = await r.json();
+    if (list.length === 0) { $('todos').textContent = '(none)'; return; }
+    $('todos').innerHTML = list.map(t =>
+      `<div class="todo-row ${t.completed ? 'done':''}" data-testid="todo-${t.id}">
+         <span class="title">#${t.id} · ${escapeHtml(t.title)}</span>
+         <span><button class="secondary" onclick="toggleDone(${t.id}, ${!t.completed}, '${escapeJs(t.title)}')">${t.completed ? 'undo':'done'}</button></span>
+       </div>`).join('');
+  } catch (e) { $('todos').textContent = '(error: ' + e.message + ')'; }
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeJs(s){ return String(s).replace(/['\\]/g, c=>'\\'+c); }
+
+async function addTodo() {
+  const title = $('newTitle').value.trim();
+  if (!title) return;
+  log(`POST /todos {title:"${title}"}  [mode=${mode}]`);
+  const r = await fetch('/todos', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({title})
+  });
+  const j = await r.json().catch(()=>null);
+  log('  → ' + (j ? JSON.stringify(j) : r.status));
+  $('newTitle').value = '';
+  await refreshTodos();
+}
+
+async function toggleDone(id, completed, title) {
+  log(`PUT /todos/${id} {title:"${title}", completed:${completed}}  [mode=${mode}]`);
+  await fetch(`/todos/${id}`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({title, completed})
+  });
+  await refreshTodos();
+}
+
+async function recordStart() {
+  await fetch(`/service/record/start?track=${TRACK}`);
+  setMode('recording');
+  log(`record/start track=${TRACK}`);
+}
+async function recordStop() {
+  await fetch('/service/record/end');
+  setMode('live');
+  log('record/end');
+}
+
+async function sessionStart() {
+  const desc = 'ui-session-' + new Date().toISOString().replace(/[:.]/g,'-');
+  await fetch(`/service/session/start?track=${TRACK}&description=${encodeURIComponent(desc)}`, { credentials: 'include' });
+  setMode('session');
+  log(`session/start track=${TRACK} description=${desc}`);
+}
+
+async function sessionStop() {
+  await fetch('/service/session/stop', { credentials: 'include' });
+  setMode('live');
+  log('session/stop  → fetching report');
+  await loadReport();
+}
+
+async function loadReport() {
+  const r = await fetch(`/service/recording/report?track=${TRACK}`);
+  if (!r.ok) { $('report').textContent = '(report unavailable: ' + r.status + ')'; return; }
+  const rep = await r.json();
+  $('reportEmpty').style.display = 'none';
+
+  const sessions = rep.sessions || [];
+  if (sessions.length === 0) { $('report').textContent = '(no completed sessions yet)'; return; }
+
+  $('report').innerHTML = sessions.map(s => {
+    const ok = s.overallStatus === 'COMPLETED';
+    const calls = (s.calls || []).map(c => {
+      const matched = c.inputMatched;
+      const recArgs = JSON.stringify(c.recordedArguments);
+      const actArgs = JSON.stringify(c.actualArguments);
+      return `<tr class="${matched ? '' : 'diff-bad'}" data-testid="call-${c.method}-${c.sequence}">
+                <td>${c.sequence}</td>
+                <td class="mono">${escapeHtml(c.method)}</td>
+                <td class="mono">${escapeHtml(recArgs)}</td>
+                <td class="mono">${escapeHtml(actArgs)}</td>
+                <td><span class="badge ${matched ? 'ok':'bad'}" data-testid="badge-${c.method}-${c.sequence}">${matched ? 'match':'drift'}</span></td>
+              </tr>`;
+    }).join('');
+    return `<div data-testid="session-${s.sessionId}" style="margin-bottom:14px;">
+              <div style="margin-bottom:6px;">
+                <span class="badge ${ok ? 'ok':'bad'}" data-testid="overall-status">${s.overallStatus}</span>
+                &nbsp;<span class="mono">${escapeHtml(s.description || s.sessionId)}</span>
+                &nbsp;<span class="note">(${s.callCount} calls)</span>
+              </div>
+              <table>
+                <thead><tr><th>#</th><th>method</th><th>recorded args</th><th>actual args</th><th></th></tr></thead>
+                <tbody>${calls || '<tr><td colspan="5" class="note">(no calls recorded)</td></tr>'}</tbody>
+              </table>
+            </div>`;
+  }).join('');
+  log('report: ' + sessions.length + ' session(s), latest ' + sessions[sessions.length-1].overallStatus);
+}
+
+async function reset() {
+  log('reset: deleting all todos');
+  const r = await fetch('/todos');
+  const list = await r.json();
+  for (const t of list) { await fetch(`/todos/${t.id}`, { method:'DELETE' }); }
+  await refreshTodos();
+}
+
+setMode('live');
+refreshTodos();
+loadReport();
+</script>
+</body>
+</html>

@@ -25,7 +25,7 @@ import jakarta.annotation.PostConstruct;
 public class GreetingController  implements IGreetingController{
 
 
-@Juke("juke")
+@Juke
 @Autowired
 private IGreetingsService service;
 	@Override

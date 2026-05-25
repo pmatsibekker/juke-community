@@ -1,21 +1,18 @@
-# Juke in a Nutshell
+# Juke Manual
 
 ### *A Desktop Quick Reference*
 
 **The Juke Project**
 
-*Early Release — covers Juke 0.0.1*
-
-*Beijing · Boston · Farnham · Sebastopol · Tokyo*
+*Covers Juke 0.0.1*
 
 <div align="center">
-  <img src="lyrebird.png" alt="A superb lyrebird — the cover animal of Juke in a Nutshell" width="340"/>
+  <img src="lyrebird.png" alt="A superb lyrebird — the mascot for the Juke Manual" width="340"/>
 </div>
 
-> *The animal on the cover of Juke in a Nutshell is a superb lyrebird (Menura
-> novaehollandiae), one of nature's great mimics — it records the sounds of its
-> world and replays them with uncanny fidelity, much as Juke records and replays
-> your upstream interactions.*
+> *The lyrebird (Menura novaehollandiae) is one of nature's great mimics — it
+> records the sounds of its world and replays them with uncanny fidelity, much
+> as Juke records and replays your upstream interactions.*
 
 ---
 
@@ -1241,7 +1238,7 @@ attach the agent and retry.
 
 # Colophon
 
-The animal on the cover of *Juke in a Nutshell* is a **superb lyrebird**
+The mascot of the *Juke Manual* is the **superb lyrebird**
 (*Menura novaehollandiae*), a ground-dwelling songbird of southeastern
 Australia. The lyrebird is among the finest vocal mimics in nature: it listens
 to the sounds of its environment — other birds, and sometimes mechanical
@@ -1252,5 +1249,4 @@ fitting mascot for Juke.
 The cover image is a nineteenth-century engraving. The text is set in a serif
 body face with `Constant Width` for code.
 
-*Juke in a Nutshell* — Early Release. Covers Juke 0.0.1. © The Juke Project,
-licensed under Apache 2.0.
+*Juke Manual.* Covers Juke 0.0.1. © The Juke Project, licensed under Apache 2.0.

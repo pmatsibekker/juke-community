@@ -1,0 +1,7 @@
+# Requirements for build_manual_pdf.py — generates JUKE_MANUAL.pdf from JUKE_MANUAL.md
+# Install with: pip install -r requirements.txt
+
+markdown>=3.6
+xhtml2pdf>=0.2.17
+reportlab>=4.0
+pygments>=2.16

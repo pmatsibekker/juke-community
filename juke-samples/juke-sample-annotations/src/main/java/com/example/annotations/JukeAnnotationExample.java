@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  *   <li><b>Field-level</b> — {@code @Juke} on a field. The
  *       {@code JukeBeanPostProcessor} replaces the bean reference with
  *       a proxy after Spring finishes injecting.</li>
- *   <li><b>Method-level</b> — {@code @Juke("juke")} on a method. The
+ *   <li><b>Method-level</b> — {@code @Juke} on a method. The
  *       annotation processor generates code to wrap the return value
  *       with {@code JukeFactory} on the way out.</li>
  *   <li><b>Manual</b> — call {@link JukeInitializer#wrap(Object, Class, String)}

@@ -248,7 +248,7 @@ public class ServiceFactory {
         return raw;       // Juke wraps `raw` before the method executes
     }
 
-    @Juke("juke")
+    @Juke
     public IGreetingsService getDecoratedGreeting() {
         return real;      // return value is wrapped post-call
     }

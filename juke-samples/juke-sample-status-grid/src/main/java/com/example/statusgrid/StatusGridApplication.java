@@ -7,7 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 /**
  * Cross-session status-visibility reference app.
  *
- * <p>The {@code @Juke("juke")} seam records globally and replays per cookie
+ * <p>The {@code @Juke} seam records globally and replays per cookie
  * session. Many sessions can replay the same recording concurrently, each at
  * its own position; {@code GET /service/sessions} reports every active
  * session's {@code lastCall} and {@code percentComplete} — the data a live
