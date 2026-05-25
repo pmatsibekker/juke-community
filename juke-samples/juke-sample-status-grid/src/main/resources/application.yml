@@ -1,0 +1,21 @@
+# ============================================================================
+# juke-sample-status-grid — base configuration
+# ============================================================================
+# Record a track, then run concurrent cookie sessions and watch
+# GET /service/sessions report each session's lastCall + percentComplete.
+# ============================================================================
+
+juke:
+  enabled: true
+  path: ${user.home}/juke/sample-status-grid
+  zip: status-grid-track
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration

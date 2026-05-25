@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Juke — Cross-session status grid demo</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f4f6fb; color: #1a1a1a; }
+    header { background: #1d3557; color: #fff; padding: 18px 28px; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; opacity: .85; font-size: 13px; }
+    main { max-width: 960px; margin: 24px auto; padding: 0 20px; }
+    .card { background: #fff; border: 1px solid #d8dee9; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; }
+    .card h2 { margin: 0 0 10px; font-size: 14px; color: #2a4a6b; text-transform: uppercase; letter-spacing: .04em; }
+    button { background: #2a6df4; color: #fff; border: 0; border-radius: 6px; padding: 9px 14px; font-size: 14px; cursor: pointer; margin-right: 8px; }
+    button.secondary { background: #5b6b82; }
+    button:disabled { opacity: .5; cursor: default; }
+    label.toggle { font-size: 13px; color: #444; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eef1f6; }
+    th { color: #2a4a6b; text-transform: uppercase; letter-spacing: .04em; font-size: 11px; }
+    .sid { font-family: Consolas, monospace; color: #555; }
+    .seam { font-family: Consolas, monospace; color: #1d3557; }
+    .bar { background: #e7ecf5; border-radius: 5px; height: 14px; width: 160px; position: relative; overflow: hidden; }
+    .bar > span { position: absolute; left: 0; top: 0; bottom: 0; background: #2a6df4; }
+    .bar.done > span { background: #1a7f37; }
+    .pct { font-variant-numeric: tabular-nums; margin-left: 8px; }
+    .pill { display:inline-block; border-radius: 10px; padding: 1px 8px; font-size: 11px; }
+    .pill.ip { background:#eaf1ff; color:#1d3557; }
+    .pill.done { background:#e3f5e9; color:#1a7f37; }
+    .note { font-size: 12.5px; color: #555; }
+    #log { font-family: Consolas, monospace; font-size: 12px; color:#444; white-space: pre-wrap; }
+    .empty { color:#888; font-style: italic; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Cross-session status grid — <code>@Juke("juke")</code> per-cookie replay</h1>
+  <p>One recording, many concurrent replay sessions. Each <em>worker</em> gets its own
+     <code>JUKE_SESSION_ID</code> cookie and advances through the track at its own pace;
+     <code>GET /service/sessions</code> reports every session's <code>lastCall</code> and
+     <code>percentComplete</code> — the data behind this live grid.</p>
+</header>
+<main>
+  <div class="card">
+    <h2>Drive it</h2>
+    <button id="btnRecord" onclick="record()">1 · Record track (6 calls)</button>
+    <button id="btnSpawn" class="secondary" onclick="spawn()" disabled>2 · Spawn worker (replays part of the track)</button>
+    <button id="btnRefresh" class="secondary" onclick="refresh()" disabled>Refresh grid</button>
+    <label class="toggle"><input type="checkbox" id="auto" onchange="toggleAuto()" disabled/> auto-refresh</label>
+    <p class="note">Record once, then spawn workers. Each spawn starts a fresh cookie session and
+       replays a random slice of the track, so workers land at different positions. The grid reads
+       server-side session state, so it shows <em>all</em> workers — not just the one whose cookie is active.</p>
+  </div>
+
+  <div class="card">
+    <h2>Sessions (<span id="count">0</span>)</h2>
+    <table>
+      <thead>
+        <tr><th>Session</th><th>Track</th><th>Last call</th><th>Progress</th><th>Steps</th></tr>
+      </thead>
+      <tbody id="grid">
+        <tr><td colspan="5" class="empty">No sessions yet — record a track, then spawn a worker.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <div id="log"></div>
+  </div>
+</main>
+
+<script>
+const TRACK = 'ui-demo';
+const NAMES = ['Ann', 'Ben', 'Cara', 'Dan', 'Eve', 'Finn'];
+let worker = 0;
+let timer = null;
+const $ = id => document.getElementById(id);
+const log = m => { $('log').textContent += m + '\n'; };
+async function getText(u, opts){ const r = await fetch(u, opts); return r.text(); }
+async function getJson(u){ const r = await fetch(u); return r.json(); }
+
+async function record() {
+  $('btnRecord').disabled = true;
+  log(`record/start?track=${TRACK} → 6 × /api/greet → record/end …`);
+  await getText(`/service/record/start?track=${TRACK}`);
+  for (const n of NAMES) await getText(`/api/greet/${n}`);
+  await getText('/service/record/end');
+  log('recorded 6 calls (one greet seam, sequences 1–6)');
+  $('btnSpawn').disabled = false;
+  $('btnRefresh').disabled = false;
+  $('auto').disabled = false;
+  $('btnRecord').disabled = false;
+}
+
+async function spawn() {
+  worker++;
+  // session/start sets the JUKE_SESSION_ID cookie (httpOnly) for this origin;
+  // the subsequent greet calls carry it automatically and advance THIS session.
+  await getText(`/service/session/start?track=${TRACK}&description=worker-${worker}`);
+  const calls = 1 + Math.floor(Math.random() * 4); // 1–4 → stays in-progress
+  for (let i = 0; i < calls; i++) await getText(`/api/greet/${NAMES[i]}`);
+  log(`worker-${worker} replayed ${calls} call(s)`);
+  await refresh();
+}
+
+async function refresh() {
+  const data = await getJson('/service/sessions');
+  $('count').textContent = data.activeSessionCount;
+  const rows = (data.sessions || []).map(render).join('');
+  $('grid').innerHTML = rows || '<tr><td colspan="5" class="empty">No active sessions.</td></tr>';
+}
+
+function render(s) {
+  const last = s.lastCall ? s.lastCall.displayName : '—';
+  const pct = s.percentComplete || 0;
+  const done = pct >= 100;
+  const sum = s.summary || {};
+  const pill = done
+    ? '<span class="pill done">completed</span>'
+    : '<span class="pill ip">in&nbsp;progress</span>';
+  return `<tr>
+    <td class="sid">${s.sessionId.slice(0, 8)}… ${pill}</td>
+    <td>${s.track}</td>
+    <td class="seam">${last}</td>
+    <td>
+      <span class="bar ${done ? 'done' : ''}"><span style="width:${pct}%"></span></span>
+      <span class="pct">${pct.toFixed(0)}%</span>
+    </td>
+    <td>${sum.completedSteps || 0}✓ / ${sum.inProgressSteps || 0}▶ / ${sum.notStartedSteps || 0}·</td>
+  </tr>`;
+}
+
+function toggleAuto() {
+  if ($('auto').checked) {
+    timer = setInterval(refresh, 1500);
+    log('auto-refresh on (1.5s)');
+  } else {
+    clearInterval(timer); timer = null;
+    log('auto-refresh off');
+  }
+}
+</script>
+</body>
+</html>

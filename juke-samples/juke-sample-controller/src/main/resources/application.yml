@@ -1,0 +1,20 @@
+# ============================================================================
+# juke-sample-controller — base configuration
+# ============================================================================
+# @JukeController capture/diff demo. Drive record/replay through /service/*.
+# ============================================================================
+
+juke:
+  enabled: true
+  path: ${user.home}/juke/sample-controller
+  zip: controller-track
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration

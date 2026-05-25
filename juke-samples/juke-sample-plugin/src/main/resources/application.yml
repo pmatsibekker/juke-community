@@ -1,0 +1,27 @@
+# ============================================================================
+# juke-sample-plugin — base configuration
+# ============================================================================
+# One process = the Juke agent + a plugin that self-registers with it.
+# ============================================================================
+
+juke:
+  enabled: true                       # this process is also the Juke agent
+  path: ${user.home}/juke/sample-plugin
+  zip: plugin-track
+  plugin:
+    enabled: true
+    plugin-id: demo-transformer
+    display-name: Demo Recording Transformer
+    version: 1.0.0
+    base-url: http://localhost:8080   # where the agent can reach this plugin
+    remix-base-url: http://localhost:8080  # the agent to register with (self)
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration
