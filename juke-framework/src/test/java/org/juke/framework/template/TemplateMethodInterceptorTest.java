@@ -65,6 +65,7 @@ public class TemplateMethodInterceptorTest {
 
     private SampleTemplate realTemplate;
     private String savedGlobalJuke;
+    private String zipName;
 
     @BeforeEach
     void setUp() {
@@ -73,13 +74,19 @@ public class TemplateMethodInterceptorTest {
         // Save and reset global state so other tests don't interfere
         savedGlobalJuke = JukeState.getGlobaljuke();
 
-        // Make sure JukeHelper DAO is initialized for record tests
+        // Use a UNIQUE zip name per test. A single shared "template-test.zip" in
+        // the common temp dir is fragile: if a prior run's JVM was killed
+        // mid-test the file can be left locked/corrupt, and on Windows the
+        // best-effort delete() below silently fails — so a later test (e.g.
+        // handleReplay_noRuntimeStorage_initializesDao) then fails to list
+        // entries in the stale zip. A per-test name can never collide with a
+        // leftover, making these tests order- and run-independent.
+        zipName = "template-test-" + System.nanoTime();
         String jukePath = ConfigUtil.getDefauljukePath();
         System.setProperty("juke.path", jukePath);
-        System.setProperty("juke.zip", "template-test");
+        System.setProperty("juke.zip", zipName);
 
-        // Clean up previous test artifacts
-        File zipFile = new File(jukePath, "template-test.zip");
+        File zipFile = new File(jukePath, zipName + ".zip");
         if (zipFile.exists()) {
             //noinspection ResultOfMethodCallIgnored
             zipFile.delete();
@@ -88,8 +95,13 @@ public class TemplateMethodInterceptorTest {
 
     @AfterEach
     void tearDown() {
-        // Restore global state
+        // Restore global state and best-effort remove this test's zip so the
+        // temp dir doesn't accumulate per-run artifacts.
         JukeState.setGlobaljuke(savedGlobalJuke);
+        if (zipName != null) {
+            //noinspection ResultOfMethodCallIgnored
+            new File(ConfigUtil.getDefauljukePath(), zipName + ".zip").delete();
+        }
     }
 
     // ============================ IGNORE mode =============================
@@ -151,7 +163,7 @@ public class TemplateMethodInterceptorTest {
         JukeState.setGlobaljuke(JukeState.RECORD);
 
         JukeHelper.setJukeDao(new JukeZipDAOImpl(
-                ConfigUtil.getDefauljukePath(), "template-test"));
+                ConfigUtil.getDefauljukePath(), zipName));
 
         TemplateMethodInterceptor interceptor = new TemplateMethodInterceptor(
                 realTemplate, "SampleTemplate", JukeState.RECORD, null);
@@ -177,7 +189,7 @@ public class TemplateMethodInterceptorTest {
         JukeState.setGlobaljuke(JukeState.RECORD);
 
         JukeHelper.setJukeDao(new JukeZipDAOImpl(
-                ConfigUtil.getDefauljukePath(), "template-test"));
+                ConfigUtil.getDefauljukePath(), zipName));
 
         TemplateMethodInterceptor interceptor = new TemplateMethodInterceptor(
                 realTemplate, "SampleTemplate", JukeState.RECORD, null);
@@ -217,7 +229,7 @@ public class TemplateMethodInterceptorTest {
         JukeState.setGlobaljuke(JukeState.RECORD);
 
         JukeHelper.setJukeDao(new JukeZipDAOImpl(
-                ConfigUtil.getDefauljukePath(), "template-test"));
+                ConfigUtil.getDefauljukePath(), zipName));
 
         TemplateMethodInterceptor recorder = new TemplateMethodInterceptor(
                 realTemplate, "SampleTemplate", JukeState.RECORD, null);
@@ -289,7 +301,7 @@ public class TemplateMethodInterceptorTest {
     void jukeState_withGlobalRecord_callsHandleRecord() throws Throwable {
         JukeState.setGlobaljuke(JukeState.RECORD);
         JukeHelper.setJukeDao(new JukeZipDAOImpl(
-                ConfigUtil.getDefauljukePath(), "template-test"));
+                ConfigUtil.getDefauljukePath(), zipName));
 
         TemplateMethodInterceptor interceptor = new TemplateMethodInterceptor(
                 realTemplate, "SampleTemplate", JukeState.JUKE, null);
@@ -313,7 +325,7 @@ public class TemplateMethodInterceptorTest {
         // ---- record a value first ----
         JukeState.setGlobaljuke(JukeState.RECORD);
         JukeHelper.setJukeDao(new JukeZipDAOImpl(
-                ConfigUtil.getDefauljukePath(), "template-test"));
+                ConfigUtil.getDefauljukePath(), zipName));
 
         TemplateMethodInterceptor recorder = new TemplateMethodInterceptor(
                 realTemplate, "SampleTemplate", JukeState.RECORD, null);
@@ -349,7 +361,7 @@ public class TemplateMethodInterceptorTest {
         // ---- record ----
         JukeState.setGlobaljuke(JukeState.RECORD);
         JukeHelper.setJukeDao(new JukeZipDAOImpl(
-                ConfigUtil.getDefauljukePath(), "template-test"));
+                ConfigUtil.getDefauljukePath(), zipName));
         TemplateMethodInterceptor recorder = new TemplateMethodInterceptor(
                 realTemplate, "SampleTemplate", JukeState.RECORD, null);
         Method fetchData = ISampleTemplate.class.getMethod("fetchData", String.class);
@@ -359,7 +371,7 @@ public class TemplateMethodInterceptorTest {
         // ---- replay with storage cleared from runtime holder ----
         JukeState.setGlobaljuke(JukeState.REPLAY);
         System.setProperty("juke.path", ConfigUtil.getDefauljukePath());
-        System.setProperty("juke.zip", "template-test");
+        System.setProperty("juke.zip", zipName);
 
         // Reset to NONE so storage() == null, triggering DAO creation inside ensureReplayInitialized
         org.juke.framework.runtime.JukeRuntimeHolder.reset();
@@ -371,7 +383,7 @@ public class TemplateMethodInterceptorTest {
         } finally {
             // Restore DAO so other tests are not affected
             JukeHelper.setJukeDao(new JukeZipDAOImpl(
-                    ConfigUtil.getDefauljukePath(), "template-test"));
+                    ConfigUtil.getDefauljukePath(), zipName));
         }
     }
 
