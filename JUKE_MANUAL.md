@@ -593,12 +593,21 @@ Accepted values: `juke` (default — follow the global mode), `record`,
 `replay`, `ignore`, `none`, `disable`. The `autoWrap()` attribute (default
 `true`) disables wrapping when set `false`.
 
+> **See it run** — `juke-sample-greeting` is the canonical interface-field
+> case; `juke-sample-rest-client` shows the concrete `RestTemplate` case with
+> `name` + `excludeMethods`.
+
 ## 4.2 `@JukeController`
 
 `@JukeController` marks a Spring `@RestController` for controller-level AOP
 advice: request/response logging in MDC tags, optional finding capture, and
 cookie-bound session resolution. Most applications never apply it directly —
 it is wiring for the bundle-backed session flow (Chapter 6).
+
+> **See it run** — `juke-sample-controller`. Start the server with
+> `demo-start-server.bat`, then run `demo-run-curl.bat`: a poisoned payload
+> sent on replay logs `CONTROLLER_MISMATCH` on the server without altering
+> the response, so contract drift is visible without breaking the test.
 
 ## 4.3 `@JukeIgnorable`
 
@@ -622,6 +631,10 @@ values:
 |---|---|
 | `ALWAYS` *(default)* | Skip this field in every comparison — right for generated IDs and UUIDs. |
 | `NOT_NULL` | Skip the value diff, but still flag a null-vs-non-null mismatch — right for timestamps. |
+
+> **See it run** — `juke-sample-todo`. The auto-incremented `id` on a
+> persisted ToDo is `@JukeIgnorable` so replays of CRUD calls don't
+> false-positive on the changing id.
 
 ---
 
@@ -721,6 +734,12 @@ live status grids.
 When a session is stopped it moves into a per-track **history**, which the
 report endpoint of Chapter 10 reads.
 
+> **See it run** — `juke-sample-session` drives parallel Playwright workers,
+> each on its own track via one cookie jar per worker.
+> `juke-sample-status-grid` renders the `/service/sessions` view live:
+> start the server, open two cookie jars in the bundled curl script,
+> and watch each row's `lastCall` + `percentComplete` advance.
+
 ---
 
 # Chapter 7. The Recording Format
@@ -814,6 +833,12 @@ happy-path recording, schedule a one-shot exception on `Service.call.1`, drive
 the UI action, and assert the user sees a brief "retrying…" indicator
 followed by the recorded success. No mocks, no service virtualization, no real
 network failure — and your production retry code actually runs.
+
+> **See it run** — `juke-sample-exceptions`. One SKU order is driven four
+> times: record → deterministic replay → replay with an injected delay
+> ("queued" UI state) → replay with an injected exception ("technical
+> difficulties"). Confirmation numbers are `@JukeIgnorable`; functional
+> coverage is shown in a side popup.
 
 ---
 
@@ -930,6 +955,12 @@ The whole feature is gated by `juke.coverage.enabled` (default `false`) and,
 for server coverage, the presence of the `-javaagent`. A production deployment
 sets neither and pays nothing — the coverage beans are never instantiated.
 
+> **See it run** — `juke-sample-coverage` is the end-to-end demo:
+> `demo-start-server.{bat,ps1}` attaches the JaCoCo agent and wires the
+> `juke.coverage.*` keys; `demo-run-playwright.{bat,ps1}` drives the journey
+> twice and harvests `window.__coverage__` so both halves of the live
+> dashboard fill in.
+
 ---
 
 # Chapter 10. Session Reports
@@ -982,6 +1013,15 @@ Each completed session carries an `overallStatus`:
 
 The companion endpoint `GET /service/recording/inputs?track={name}` returns
 just the recorded input sidecars, for comparing what a run *should* have sent.
+
+> **See it run** — `juke-sample-todo`. Start the server, click "Start
+> recording" and add two todos; click "Start replay session" and add the
+> same titles but change the second one; click "Stop session". The report
+> panel renders the per-call table — drift row highlighted red,
+> `recordedArguments` vs `actualArguments` side by side,
+> `overallStatus: COMPLETED_WITH_DEVIATIONS`. `demo-run-curl.{bat,ps1}`
+> drives the same journey from a terminal; `demo-run-playwright.{bat,ps1}`
+> drives it from a visible Chrome window.
 
 ---
 
@@ -1160,19 +1200,66 @@ The agent code is identical either way.
 
 # Appendix A. Sample Applications
 
-The `juke-samples/` directory contains runnable references:
+The `juke-samples/` directory contains ten runnable references. Each is a
+self-contained Spring Boot application that demonstrates one concept in
+isolation — they exist to show how to wire Juke into a real app, not to
+serve as a production-grade test corpus.
 
-| Sample | Demonstrates |
+## A.1 The demo-script convention
+
+Every sample ships the same trio of launchers in its root directory, in both
+`.bat` (Windows cmd) and `.ps1` (PowerShell) flavours:
+
+| Script | Purpose |
 |---|---|
-| `juke-sample-greeting` | The canonical app — one REST endpoint, one `@Juke` seam, a bundled React (Vite) SPA. The basis of *DEMO.md*. |
-| `juke-sample-coverage` | The functional-coverage demo (Chapter 9). A live dashboard polls `/service/coverage` while you click through the journey; bundled `demo-start-server.{ps1,bat}` and `demo-run-playwright.{ps1,bat}` launchers wire up the JaCoCo agent and the nyc report path. |
-| `juke-sample-todo` | A plain REST CRUD surface; the false-positive / `@JukeIgnorable` walk-through. |
-| `juke-sample-session` | Per-session replay and the Playwright specs, including the visual demo. |
-| `juke-sample-annotations` | `@Juke` on fields, methods, and constructor parameters. |
-| `juke-sample-exceptions` | Exception and latency flows (Chapter 8). A SKU order places three orders through a `@Juke` OMS seam, driven four times — record, deterministic replay, replay with an injected delay ("queued"), and replay with an injected exception ("technical difficulties"). Confirmation numbers are `@JukeIgnorable`; coverage is shown in a separate popup. |
+| `demo-start-server.{bat,ps1}` | Locates a JDK 25, builds the jar if needed, sets the right `-javaagent` / `juke.*` flags, and boots the app on port 8080. Run it first; leave it running in its own terminal. |
+| `demo-run-curl.{bat,ps1}` | Drives the sample's full journey through `curl` — record → replay → assert. Run it from any second terminal once the server has printed `Started …Application`. |
+| `demo-run-playwright.{bat,ps1}` *(samples with a UI)* | Opens a real Chrome window via Playwright and walks the same journey visibly, with `slowMo` set high enough for a human to follow. Set `JUKE_HEADLESS=1` to run it as a CI smoke check. |
+
+You can also double-click any of the `.bat` files. There are no profile
+switches and no environment variables to remember — the scripts encode the
+journey, and the journey is the documentation.
+
+## A.2 The samples
+
+| Sample | What it shows | Relevant chapter |
+|---|---|---|
+| `juke-sample-greeting` | The canonical app — one REST endpoint, one interface-typed `@Juke` seam, a bundled React (Vite) SPA. Basis of `juke-samples/DEMO.md`. | Ch. 2, 4.1 |
+| `juke-sample-annotations` | `@Juke` on fields, methods, constructor parameters, and a multi-service composition with no controllers. Reference code only. | Ch. 4.1 |
+| `juke-sample-rest-client` | Concrete-field `@Juke` on a `RestTemplate` (CGLIB), with `name` disambiguation + `excludeMethods` for builder methods. | Ch. 4.1 |
+| `juke-sample-controller` | `@JukeController` capture + contract-drift detection. A poisoned payload on replay logs `CONTROLLER_MISMATCH` on the server without altering the response. | Ch. 4.2 |
+| `juke-sample-todo` | REST CRUD + `@JukeIgnorable` on auto-generated `id`, **and** the visible session-drift UI: change one input during a cookie-replay session and the report panel highlights the drift row. | Ch. 4.3, 10 |
+| `juke-sample-session` | Per-session cookie replay with parallel Playwright workers — each worker carries its own track without restarting the JVM. Also hosts the cross-sample Playwright suite. | Ch. 6 |
+| `juke-sample-status-grid` | Cross-session live view: many cookie sessions replay one track, the grid UI polls `/service/sessions` and shows each session's `lastCall` + `percentComplete`. | Ch. 6.3 |
+| `juke-sample-exceptions` | Exception / latency flows. A SKU order places three orders through a `@Juke` OMS seam, driven four times — record, deterministic replay, replay+delay ("queued"), replay+exception ("technical difficulties"). | Ch. 8 |
+| `juke-sample-coverage` | End-to-end functional-coverage demo. Live dashboard polls `/service/coverage`; the Playwright launcher fills in the UI half via `window.__coverage__` harvest. | Ch. 9 |
+| `juke-sample-plugin` | Plugin SDK self-registration. A `@PluginCapability(RECORDING_TRANSFORMER)` bean POSTs itself at startup over `/service/plugins/*` and is then visible from `GET /service/plugins`. | App. A.3 |
+
+## A.3 A reading order
+
+The samples build on each other if read in this order, but every one is
+independent — pick the one that matches the chapter you're working through.
+
+1. **`juke-sample-greeting`** — five minutes from clone to recording. The
+   basis for *DEMO.md*.
+2. **`juke-sample-annotations`** — read the source; this is the annotation
+   surface concretised.
+3. **`juke-sample-todo`** — the first sample with a UI that *shows* drift
+   detection rather than logging it. Start here if Chapter 10 felt abstract.
+4. **`juke-sample-session`** + **`juke-sample-status-grid`** — once you
+   understand per-session replay, the grid shows what cross-session
+   visibility looks like in production.
+5. **`juke-sample-exceptions`** — the most complete worked example: every
+   pattern from Chapters 4, 5, 8, and 9 in one demo.
+6. **`juke-sample-coverage`** — the dashboard makes the Chapter 9 numbers
+   tangible.
+7. **`juke-sample-controller`**, **`juke-sample-rest-client`**,
+   **`juke-sample-plugin`** — specialised cases; reach for them when you hit
+   the situation each one addresses.
 
 `juke-samples/DEMO.md` is a 15-minute guided walk-through built on
-`juke-sample-greeting`.
+`juke-sample-greeting`. `juke-samples/LESSONS_LEARNED.md` is the internal
+authoring guide — read it before adding a new sample.
 
 ---
 
