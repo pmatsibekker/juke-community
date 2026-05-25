@@ -268,6 +268,8 @@ Supported values: `juke` (default — follow global mode), `record`, `replay`, `
 
 `@JukeController` (in `juke-framework`'s annotation package) marks a Spring `@RestController` for the controller-level AOP advice — request/response logging in MDC tags, optional finding capture, cookie-bound session resolution. You typically don't need this directly unless you're wiring the controller into the bundle-backed session flow described in §8.
 
+> **Worked example:** `juke-samples/juke-sample-controller`. Its `demo-run-curl.{bat,ps1}` records two calls, then replays one with a poisoned payload: the server logs `CONTROLLER_MISMATCH` without altering the response, so contract drift is visible without breaking the test.
+
 ### `@JukeIgnorable` — opt out specific methods or fields
 
 When `@Juke` is on a class, every public method gets wrapped. `@JukeIgnorable` on a method opts that one out:
@@ -510,6 +512,8 @@ Sessions let multiple browser tabs (or test runners) replay different tracks aga
 
 `juke-remix-rest-service` carries a thin in-memory plugin registry — community-licensable, no DB. Plugins POST themselves at startup, send heartbeats, and become discoverable through these endpoints. The full plugin lifecycle and how to write a plugin against `juke-plugin-sdk` are covered in the Enterprise guide.
 
+> **Worked example:** `juke-samples/juke-sample-plugin`. A `@PluginCapability(RECORDING_TRANSFORMER)` bean self-registers on startup over `/service/plugins/register`; `demo-run-curl.{bat,ps1}` then lists it via `GET /service/plugins`.
+
 | Endpoint                                              | Description                                                              |
 | ----------------------------------------------------- | ------------------------------------------------------------------------ |
 | `POST /service/plugins/register`                      | Register a plugin (request body = `PluginRegistration` JSON).             |
@@ -618,6 +622,10 @@ A few things worth knowing:
 - **`lastCall.displayName`** is rendered as `<SimpleType>.<method>.<sequence>` — `IGreetingsService.greeting.7` instead of the raw ZIP-entry path. The fully-qualified `lastCall.entry` matches `steps[].entry` for cross-referencing.
 - **`lastCall` is `null`** until the session resolves its first call. A freshly opened session that nothing has driven traffic against shows `null`/`0.0` rather than fake activity.
 - **`percentComplete`** is `sum(currentIndex) / sum(totalLength) * 100` across every entry in the recording — entries the session hasn't touched contribute 0, fully consumed entries contribute their full length. It's a coarse signal, not call-accurate (the underlying `currentIndex` overshoots consumed-call count by up to one step), but it's good enough to drive a progress bar and dramatically more useful than a bare step count.
+
+> **Worked example:** `juke-samples/juke-sample-status-grid`. Its `demo-run-curl.{bat,ps1}` opens two cookie jars against one track; the live grid UI at `http://localhost:8080` polls `/service/sessions` and shows each session's `lastCall` and `percentComplete` advancing.
+
+> **Drift surfacing on the same endpoint:** `juke-samples/juke-sample-todo` exercises `GET /service/recording/report?track=…` — change one input mid-session and the UI report panel renders the per-call table with `recordedArguments` vs `actualArguments` and an `overallStatus` of `COMPLETED_WITH_DEVIATIONS`. `demo-run-playwright.{bat,ps1}` walks the journey visibly.
 
 ---
 
@@ -849,6 +857,37 @@ Keep `juke.coverage.enabled` absent from production YAML. The feature then has z
 ---
 
 ## 12. Sample application walkthrough
+
+The `juke-samples/` directory ships ten runnable Spring Boot references — one for each pattern in this guide. This section walks through `juke-sample-greeting` end-to-end (it's the canonical app and the basis for `juke-samples/DEMO.md`), then catalogs the rest with one journey per sample.
+
+### Running any sample
+
+Every sample directory carries the same three launcher pairs (Windows `.bat` + PowerShell `.ps1`):
+
+| Script | Purpose |
+|---|---|
+| `demo-start-server.{bat,ps1}` | Locates JDK 25, builds the jar if needed, sets the right `juke.*` / `-javaagent` flags, and boots on port 8080. Run first; leave it running. |
+| `demo-run-curl.{bat,ps1}` | Drives the sample's full record → replay → assert journey through `curl`. Run from any second terminal. |
+| `demo-run-playwright.{bat,ps1}` (UI samples) | Opens a visible Chrome window via Playwright and walks the same journey with `slowMo` set high enough to follow. `JUKE_HEADLESS=1` runs it as a CI smoke check. |
+
+The launchers encode the journey end-to-end — no profile switches or environment variables to remember. Read the scripts when you want to know exactly what each demo does.
+
+### Sample catalog
+
+| Sample | What it shows | Read first |
+|---|---|---|
+| [`juke-sample-greeting`](juke-samples/juke-sample-greeting) | Canonical app: one REST endpoint, one interface-typed `@Juke` seam, bundled React SPA. | §2, §3 |
+| [`juke-sample-annotations`](juke-samples/juke-sample-annotations) | `@Juke` on fields, methods, constructor parameters; multi-service composition with no controllers. | §3 |
+| [`juke-sample-rest-client`](juke-samples/juke-sample-rest-client) | Concrete-field `@Juke` on a `RestTemplate` (CGLIB) with `name` disambiguation + `excludeMethods` for builder methods. | §3 |
+| [`juke-sample-controller`](juke-samples/juke-sample-controller) | `@JukeController` capture + contract-drift detection. The demo curl posts a poisoned payload on replay; the server log emits `CONTROLLER_MISMATCH` without altering the response. | §3 |
+| [`juke-sample-todo`](juke-samples/juke-sample-todo) | REST CRUD + `@JukeIgnorable` on auto-generated `id`, **and** the visible session-drift UI: change one input during a cookie-replay session and the report panel highlights the drift row. | §3, §8 |
+| [`juke-sample-session`](juke-samples/juke-sample-session) | Per-session cookie replay with parallel Playwright workers — each worker carries its own track. Also hosts the cross-sample Playwright suite. | §8 |
+| [`juke-sample-status-grid`](juke-samples/juke-sample-status-grid) | Cross-session live grid: many cookie sessions on one track; the UI polls `/service/sessions` and shows each session's `lastCall` + `percentComplete`. | §8 |
+| [`juke-sample-exceptions`](juke-samples/juke-sample-exceptions) | Exception / latency flows. A SKU order is driven four times — record, replay, replay+delay ("queued"), replay+exception ("technical difficulties"). | §9 |
+| [`juke-sample-coverage`](juke-samples/juke-sample-coverage) | End-to-end functional coverage. Live dashboard polls `/service/coverage`; the Playwright launcher fills in the UI half. | §11 |
+| [`juke-sample-plugin`](juke-samples/juke-sample-plugin) | Plugin SDK self-registration. A `@PluginCapability(RECORDING_TRANSFORMER)` bean POSTs itself at startup; `GET /service/plugins` lists it. | §7 (registration relay) |
+
+### Worked example: `juke-sample-greeting`
 
 `juke-samples/juke-sample-greeting` is a complete reference app — a single REST endpoint (`GET /greeting`) that delegates through a Juke-wrapped service interface to an upstream that builds the greeting payload. A React UI is bundled into the same jar via `frontend-maven-plugin`, so launching the jar serves both the API and the SPA from one JVM.
 
