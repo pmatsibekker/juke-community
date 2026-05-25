@@ -137,9 +137,12 @@ public class TemplateMethodInterceptor implements InvocationHandler {
             // Record input arguments for replay-time validation
             JukeHelper.getInstance().writeInputArgs(baseId, method, args);
 
-            // Store the runtime type so replay can deserialize correctly
+            // Store the runtime type so replay can deserialize correctly. Use the
+            // binary name (getName, e.g. "a.b.Outer$Inner") — replay reloads it
+            // via Class.forName, which rejects the dotted canonical name for
+            // nested classes (records/DTOs declared inside another type).
             if (result != null) {
-                JukeHelper.getInstance().writeTypeMetadata(baseId, result.getClass().getCanonicalName());
+                JukeHelper.getInstance().writeTypeMetadata(baseId, result.getClass().getName());
             }
         } catch (JukeAccessException e) {
             LOG.error("Failed to record template result for {}: {}", baseId, e.getMessage());

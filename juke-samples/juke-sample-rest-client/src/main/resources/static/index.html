@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Juke — Concrete-field @Juke (RestTemplate) demo</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f4f6fb; color: #1a1a1a; }
+    header { background: #1d3557; color: #fff; padding: 18px 28px; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; opacity: .85; font-size: 13px; }
+    main { max-width: 920px; margin: 24px auto; padding: 0 20px; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .card { background: #fff; border: 1px solid #d8dee9; border-radius: 8px; padding: 16px 18px; flex: 1; min-width: 260px; }
+    .card h2 { margin: 0 0 10px; font-size: 14px; color: #2a4a6b; text-transform: uppercase; letter-spacing: .04em; }
+    button { background: #2a6df4; color: #fff; border: 0; border-radius: 6px; padding: 9px 14px; font-size: 14px; cursor: pointer; margin-right: 8px; }
+    button.secondary { background: #5b6b82; }
+    button:disabled { opacity: .5; cursor: default; }
+    input { padding: 8px 10px; border: 1px solid #c8d0dc; border-radius: 6px; font-size: 14px; width: 120px; }
+    .qid { font-family: Consolas, monospace; font-weight: 700; }
+    .match { color: #1a7f37; font-weight: 700; }
+    .nomatch { color: #b00020; font-weight: 700; }
+    pre { background: #0f1b2d; color: #d6e2f5; padding: 12px; border-radius: 6px; font-size: 12.5px; overflow:auto; max-height: 220px; }
+    .keys span { display:inline-block; background:#eaf1ff; color:#1d3557; border-radius:4px; padding:2px 7px; margin:2px; font-family:Consolas,monospace; font-size:12px;}
+    .note { font-size: 12.5px; color: #555; }
+    #log { font-family: Consolas, monospace; font-size: 12px; color:#444; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Concrete-field <code>@Juke</code> — RestTemplate record &amp; replay</h1>
+  <p>Two same-typed RestTemplate seams (<code>@Juke(name="shipping")</code> / <code>@Juke(name="pricing")</code>) over a stub upstream.
+     Record once, then replay — the recorded quote ids come back with the upstream effectively off.</p>
+</header>
+<main>
+  <div class="card" style="margin-bottom:16px;">
+    <label>SKU <input id="sku" value="SKU-1"/></label>
+    <button id="btnRecord" onclick="record()">1 · Record (live)</button>
+    <button id="btnReplay" class="secondary" onclick="replay()" disabled>2 · Replay (upstream off)</button>
+    <button id="btnKeys" class="secondary" onclick="keys()" disabled>Show recording keys</button>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h2>Recorded (live)</h2>
+      <div>shipping quoteId: <span id="recShip" class="qid">—</span></div>
+      <div>pricing quoteId: <span id="recPrice" class="qid">—</span></div>
+    </div>
+    <div class="card">
+      <h2>Replayed</h2>
+      <div>shipping quoteId: <span id="repShip" class="qid">—</span> <span id="repShipFlag"></span></div>
+      <div>pricing quoteId: <span id="repPrice" class="qid">—</span> <span id="repPriceFlag"></span></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>Recording keys</h2>
+    <div id="keys" class="keys"><span>—</span></div>
+    <p class="note">Two seams of the same type keyed apart by <code>name</code>; the shipping seam's
+       <code>headForHeaders</code> health check is absent (<code>excludeMethods</code>).</p>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>Log</h2>
+    <div id="log"></div>
+  </div>
+</main>
+
+<script>
+const TRACK = 'ui-demo';
+let recorded = null;
+const $ = id => document.getElementById(id);
+const log = m => { $('log').textContent += m + '\n'; };
+async function getText(u){ const r = await fetch(u); return r.text(); }
+async function getJson(u){ const r = await fetch(u); return r.json(); }
+
+async function record() {
+  $('btnRecord').disabled = true;
+  log('record/start → /api/quote → record/end …');
+  await getText(`/service/record/start?track=${TRACK}`);
+  recorded = await getJson(`/api/quote/${$('sku').value}`);
+  await getText('/service/record/end');
+  $('recShip').textContent = recorded.shipping.quoteId;
+  $('recPrice').textContent = recorded.pricing.quoteId;
+  log('recorded shipping=' + recorded.shipping.quoteId + ' pricing=' + recorded.pricing.quoteId);
+  $('btnReplay').disabled = false; $('btnKeys').disabled = false; $('btnRecord').disabled = false;
+}
+
+async function replay() {
+  log('replay/start → /api/quote (upstream is irrelevant now) …');
+  await getText(`/service/replay/start?track=${TRACK}`);
+  const r = await getJson(`/api/quote/${$('sku').value}`);
+  $('repShip').textContent = r.shipping.quoteId;
+  $('repPrice').textContent = r.pricing.quoteId;
+  flag('repShipFlag', r.shipping.quoteId === recorded.shipping.quoteId);
+  flag('repPriceFlag', r.pricing.quoteId === recorded.pricing.quoteId);
+  log('replayed shipping=' + r.shipping.quoteId + ' pricing=' + r.pricing.quoteId);
+}
+
+function flag(id, ok) {
+  $(id).textContent = ok ? '✓ matches recording' : '✗ differs (live!)';
+  $(id).className = ok ? 'match' : 'nomatch';
+}
+
+async function keys() {
+  const inputs = await getText(`/service/recording/inputs?track=${TRACK}`);
+  const found = (inputs.match(/[A-Za-z0-9._@\-]+\.(getForObject|headForHeaders)\.\d+/g) || []);
+  const uniq = [...new Set(found)];
+  $('keys').innerHTML = uniq.length ? uniq.map(k => `<span>${k}</span>`).join('') : '<span>(none)</span>';
+  log('recording keys: ' + uniq.join(', '));
+}
+</script>
+</body>
+</html>

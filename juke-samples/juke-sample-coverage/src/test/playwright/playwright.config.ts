@@ -24,7 +24,9 @@ export default defineConfig({
 
   use: {
     baseURL: 'http://localhost:8080',
-    headless: false,
+    // Headed by default so the demo is watchable; set JUKE_HEADLESS=1 to run it
+    // without a visible browser (CI / the verify-samples gate).
+    headless: !!process.env.JUKE_HEADLESS,
     trace: 'off',
     video: 'off',
     // Slow down every click / fill / navigation so a human watching the

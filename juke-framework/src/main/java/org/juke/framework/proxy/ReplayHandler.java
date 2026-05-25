@@ -51,16 +51,33 @@ public class ReplayHandler<T> extends BaseHandler<T> {
 	
 		
 	static {
-		final String mode = ConfigUtil.getJukeMode();
-		// Route through the setter so JukeRuntimeHolder mirrors the change.
-		JukeState.setGlobaljuke((mode == null || !mode.equalsIgnoreCase(JukeState.RECORD)
-				&& !mode.equalsIgnoreCase(JukeState.REPLAY)) ? JukeState.IGNORE : mode);
+		// Initialize the global mode at class load ONLY if nothing has set it
+		// yet. In an app that uses only concrete-field @Juke (no interface @Juke),
+		// ReplayHandler is not loaded until the first resetReplay() — which runs
+		// *inside* /service/replay/start, right AFTER it sets REPLAY. Without this
+		// guard the block would run then and reset the mode to IGNORE, silently
+		// breaking replay for the concrete (RestTemplate) path. (getGlobaljuke()
+		// is null only when nothing has set a mode; an active record/replay/ignore
+		// mode is preserved.)
+		if (JukeState.getGlobaljuke() == null) {
+			final String mode = ConfigUtil.getJukeMode();
+			// Route through the setter so JukeRuntimeHolder mirrors the change.
+			JukeState.setGlobaljuke((mode == null || !mode.equalsIgnoreCase(JukeState.RECORD)
+					&& !mode.equalsIgnoreCase(JukeState.REPLAY)) ? JukeState.IGNORE : mode);
+		}
 
-		try {
-			JukeHelper.setJukeDao(new JukeZipDAOImpl(ConfigUtil.getJukePath(), ConfigUtil.getJukeZip()));
-		} catch (JukeAccessException e) {
-			LOG.error("Failed to initialize Juke DAO in ReplayHandler static init for path={}, zip={}: {}",
-					ConfigUtil.getJukePath(), ConfigUtil.getJukeZip(), e.getMessage(), e);
+		// Same guard for the DAO: only install the configured default if no
+		// storage is active yet. Otherwise a lazy ReplayHandler load during
+		// /service/replay/start (which has already installed the track DAO) would
+		// overwrite it with the configured juke.zip, so replay reads the wrong
+		// recording (NoSuchFile) for the concrete path.
+		if (JukeRuntimeHolder.current().storage() == null) {
+			try {
+				JukeHelper.setJukeDao(new JukeZipDAOImpl(ConfigUtil.getJukePath(), ConfigUtil.getJukeZip()));
+			} catch (JukeAccessException e) {
+				LOG.error("Failed to initialize Juke DAO in ReplayHandler static init for path={}, zip={}: {}",
+						ConfigUtil.getJukePath(), ConfigUtil.getJukeZip(), e.getMessage(), e);
+			}
 		}
 	}
 	
