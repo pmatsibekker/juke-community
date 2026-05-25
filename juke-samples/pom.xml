@@ -25,5 +25,8 @@
         <module>juke-sample-coverage</module>
         <module>juke-sample-exceptions</module>
         <module>juke-sample-rest-client</module>
+        <module>juke-sample-controller</module>
+        <module>juke-sample-plugin</module>
+        <module>juke-sample-status-grid</module>
     </modules>
 </project>

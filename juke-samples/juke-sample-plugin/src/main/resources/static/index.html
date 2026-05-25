@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Juke — Plugin SDK registration</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f4f6fb; color: #1a1a1a; }
+    header { background: #1d3557; color: #fff; padding: 18px 28px; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; opacity: .85; font-size: 13px; }
+    main { max-width: 920px; margin: 24px auto; padding: 0 20px; }
+    .card { background: #fff; border: 1px solid #d8dee9; border-radius: 8px; padding: 16px 18px; }
+    .card h2 { margin: 0 0 10px; font-size: 13px; color: #2a4a6b; text-transform: uppercase; letter-spacing: .04em; }
+    button { background: #2a6df4; color: #fff; border: 0; border-radius: 6px; padding: 9px 14px; font-size: 14px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13.5px; }
+    th, td { border: 1px solid #e0e6f0; padding: 6px 10px; text-align: left; }
+    th { background: #eaf1ff; color: #1d3557; }
+    .cap { font-family: Consolas, monospace; color: #1a7f37; font-weight: 700; }
+    .note { font-size: 12.5px; color: #555; }
+    #log { font-family: Consolas, monospace; font-size: 12px; color:#444; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Plugin SDK — third-party capability registration</h1>
+  <p>A plugin built on <code>juke-plugin-sdk</code> auto-registers with the Juke agent over the
+     <code>/service/plugins/*</code> relay on startup. This page lists what the agent currently knows about.</p>
+</header>
+<main>
+  <div class="card">
+    <h2>Registered plugins</h2>
+    <p class="note">The <code>demo-transformer</code> plugin (a <code>RECORDING_TRANSFORMER</code> capability)
+       registered itself when this app started — no manual wiring. Click refresh to read
+       <code>GET /service/plugins</code>.</p>
+    <button onclick="refresh()">Refresh /service/plugins</button>
+    <table id="tbl">
+      <thead><tr><th>Plugin id</th><th>Display name</th><th>Status</th><th>Capabilities</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="4">— click refresh —</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>Log</h2>
+    <div id="log"></div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const log = m => { $('log').textContent += m + '\n'; };
+
+async function refresh() {
+  log('GET /service/plugins …');
+  const plugins = await (await fetch('/service/plugins')).json();
+  const rows = $('rows');
+  if (!Array.isArray(plugins) || plugins.length === 0) {
+    rows.innerHTML = '<tr><td colspan="4">(no plugins registered yet)</td></tr>';
+    log('no plugins registered');
+    return;
+  }
+  rows.innerHTML = plugins.map(p => {
+    const caps = (p.capabilities || []).map(c => `<span class="cap">${c}</span>`).join(', ');
+    return `<tr><td>${p.pluginId ?? p.id ?? '?'}</td><td>${p.displayName ?? ''}</td>`
+         + `<td>${p.status ?? ''}</td><td>${caps || JSON.stringify(p.capabilities ?? '')}</td></tr>`;
+  }).join('');
+  log('registered: ' + plugins.map(p => p.pluginId ?? p.id).join(', '));
+}
+refresh();
+</script>
+</body>
+</html>
