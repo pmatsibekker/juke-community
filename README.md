@@ -127,7 +127,7 @@ The optional `juke-coverage` module answers "which lines did real user journeys 
 ### 1. Build the Project
 
 ```bash
-git clone https://github.com/pmatsibekker/Juke.git
+git clone https://github.com/pmatsibekker/juke-community.git
 cd juke
 mvn clean install
 ```
