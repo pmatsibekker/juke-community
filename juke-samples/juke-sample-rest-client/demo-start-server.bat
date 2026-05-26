@@ -32,7 +32,7 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 echo Using Java: && java -version
 
 :: -- Locate the rest-client JAR -----------------------------------------------
-set JAR=%~dp0target\juke-sample-rest-client-0.0.1-SNAPSHOT.jar
+set JAR=%~dp0target\juke-sample-rest-client-1.0.0.jar
 if not exist "%JAR%" (
     echo.
     echo ERROR: JAR not found:

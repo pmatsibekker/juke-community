@@ -9,7 +9,7 @@
 | **Language** | Java 25 · Spring Boot 3.5 |
 | **Build** | Maven multi-module |
 | **License** | See [LICENSE](LICENSE) |
-| **Status** | 0.0.1-SNAPSHOT — Active Development |
+| **Status** | 1.0.0 — Active Development |
 
 ---
 
@@ -42,6 +42,131 @@ Juke sits inside your Spring Boot application and transparently proxies your ser
                     │ REMIX:  ────┼──► Injects delays, exceptions, errors
                     └─────────────┘
 ```
+
+---
+
+## 🧭 Philosophy: Why Juke Exists
+
+### Unit Testing and Behavioral Testing
+
+The central testing tradeoff is simple: **unit tests give control**, while
+**behavioral tests give truth**.
+
+**Unit tests** isolate one class or function at a time. They are fast, precise,
+and excellent for pinning down small rules, edge cases, and regressions in code
+you already understand. They fail close to the source of a defect, they are
+cheap to run in large numbers, and they make refactoring safer when the
+behavior is already well-specified. Their weakness is that they depend on
+*authored substitutes* for the rest of the system: mocks, stubs, fixtures, and
+expectations. That makes them only as good as the author's understanding of the
+surrounding behavior — strongest as a guardrail around local logic, and weakest
+as proof that the whole feature works as a user experiences it.
+
+**Behavioral tests** start from the opposite end. They drive the system through
+an externally visible flow and judge success by the outcome a user or caller
+actually sees. Their great strength is independence: they do not need to know
+how the system is implemented internally to tell you whether the promised
+behavior is present — the best tool for catching mismatches at seams (UI ↔
+server, controller ↔ service, service ↔ upstream). Their weakness is
+operational: real behavioral tests are often slow, brittle, hard to set up, and
+expensive to keep reliable because they depend on live upstreams, mutable test
+data, network timing, and shared environments. So teams settle for many unit
+tests and only a few true end-to-end journeys — even though the journeys answer
+the most important question: *does the feature actually work?*
+
+### How Juke Bridges the Gap
+
+Juke exists because teams should not have to choose between the *speed and
+control* of unit tests and the *truthfulness* of behavioral tests. It bridges
+that gap by splitting the problem in two:
+
+1. **Record once against reality.** Drive a real use case through the running
+   system and capture what the upstreams actually returned.
+2. **Replay many times deterministically.** Re-run that same use case against
+   the captured interactions, with no live upstream dependency.
+
+That combination preserves what matters from both worlds:
+
+- From **behavioral testing**, Juke keeps the real code path, real data, and a
+  validator anchored to what a user actually drove.
+- From **unit-style testing**, Juke keeps repeatability, speed, isolation from
+  unstable external systems, and suitability for CI.
+
+Recordings turn real behavior into a deterministic asset. That is Juke's core idea.
+
+> **Note** — Put plainly: Mockito tests your code against *your assumptions*,
+> WireMock tests it against *a stub you maintain*, and Juke tests it against
+> *what the real system actually did*. A passing Juke journey is therefore
+> stronger evidence than a passing unit test, while still being stable enough to
+> run repeatedly as part of normal development.
+
+### Why the Whole System Matters
+
+Modern applications do not keep their logic neatly on one side of the boundary.
+Validation, retries, feature flags, formatting, optimistic updates, loading
+states, fallback behavior, permission checks, and error handling are often
+distributed across browser code and server code together. The user experiences
+the *composition* of those pieces, not either side in isolation.
+
+That is why testing the UI and the server as separate concerns is increasingly
+insufficient. A server unit test can prove that an endpoint returns a field; a
+UI unit test can prove that a component renders a field; neither proves that the
+right data crosses the boundary, at the right time, in the right shape, under
+the right real-world conditions. Whole-system behavioral testing answers a
+different question: not "did the UI logic pass?" and not "did the server logic
+pass?" but **"did the user journey work?"** — the level at which many expensive
+bugs actually live.
+
+This does not make unit tests obsolete; it changes their role. Unit tests are
+best for local correctness; whole-system behavioral tests are best for feature
+correctness. You need both — but if forced to choose which one should carry the
+stronger claim about whether the product works, the answer is the test that
+drives the product the way its users do.
+
+### The AI-Test Trap
+
+AI coding assistants make this structural weakness acute. A model that writes
+both the implementation *and* the test does so from the same internal
+representation of what the code should do. The test then passes not because the
+behavior is correct, but because the assertion was written to match the behavior
+the model already had in mind. **Green means "the code does what I thought,"
+which is circular.** The more capable the model, the more convincingly
+self-consistent — and self-confirming — the test suite becomes.
+
+Every unit test has two halves: the code that exercises the system, and the
+*validator* that says what "correct" means. When both halves come from the same
+source, you are not testing the code against an independent standard; you are
+photographing the current behavior at high resolution. That photograph can look
+exactly like a passing test suite while hiding real bugs.
+
+> **Thought experiment — drift masked by test maintenance.** An AI adds caching
+> to a `PricingService`. To do it cleanly it adjusts how the discount
+> calculation is invoked; the existing discount test now fails because the
+> invocation path changed, so the AI fixes the test to match the new path. Green
+> again. What it didn't reason about: the old path had a side effect that
+> fee-audit logging depended on. Audit records for premium discounts now
+> silently disappear, and no test ever asserted on audit-log completeness. The
+> mental model shifted, the tests were updated to match it, and the suite stayed
+> green while the system's actual contract with its users quietly eroded.
+
+Three properties make this structural: tests are **updated, not just added**
+(green is restored, not earned); the **validator is the author** (no independent
+behavioral anchor exists to veto the drift); and **each step is locally
+reasonable** (only the cumulative delta against real behavior reveals it). Code
+review doesn't catch it either — each change is small and arrives with green
+tests, and no reviewer reconstructs the aggregate drift from individual diffs.
+
+**A behavioral journey is the validator that scales.** It is an independent flow
+driven end-to-end, asserting on a user-visible outcome. Nobody updated it when
+the implementation changed — it still asserts what the system *promised*, so it
+can disagree with the code, and disagreement is exactly the signal you want. The
+defensible validation gate is therefore:
+
+> *Full build green* **+** *behavioral journeys passing*
+
+Unit tests guard against regressions in behavior you already understand. The
+behavioral journey tells you whether the behavior was ever right to begin with —
+and whether it has quietly drifted since.
 
 ---
 

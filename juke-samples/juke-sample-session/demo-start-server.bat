@@ -33,7 +33,7 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 echo Using Java: && java -version
 
 :: -- Locate the session JAR ---------------------------------------------------
-set JAR=%~dp0target\juke-sample-session-0.0.1-SNAPSHOT.jar
+set JAR=%~dp0target\juke-sample-session-1.0.0.jar
 if not exist "%JAR%" (
     echo.
     echo ERROR: JAR not found:

@@ -44,7 +44,7 @@ $env:Path      = "$JAVA_HOME\bin;$env:Path"
 Write-Host "Using Java: $((& java -version 2>&1)[0])" -ForegroundColor Cyan
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$JAR = Join-Path $ScriptDir "target\juke-sample-session-0.0.1-SNAPSHOT.jar"
+$JAR = Join-Path $ScriptDir "target\juke-sample-session-1.0.0.jar"
 
 if (-not (Test-Path $JAR)) {
     Write-Error @"

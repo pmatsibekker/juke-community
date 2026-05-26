@@ -31,7 +31,7 @@ echo Using Java: && java -version
 
 :: -- Locate the ToDo JAR ------------------------------------------------------
 :: Script lives in juke-sample-todo/, so the JAR is in target/ (same folder).
-set JAR=%~dp0target\juke-sample-todo-0.0.1-SNAPSHOT.jar
+set JAR=%~dp0target\juke-sample-todo-1.0.0.jar
 if not exist "%JAR%" (
     echo.
     echo ERROR: JAR not found:
