@@ -16,6 +16,13 @@ target/
 *.iws
 out/
 
+# Eclipse
+.classpath
+.factorypath
+.project
+.settings/
+.apt_generated/
+
 # OS files
 Thumbs.db
 .DS_Store
