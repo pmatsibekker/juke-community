@@ -128,7 +128,7 @@ The optional `juke-coverage` module answers "which lines did real user journeys 
 
 ```bash
 git clone https://github.com/pmatsibekker/juke-community.git
-cd juke
+cd juke-community
 mvn clean install
 ```
 
@@ -344,7 +344,7 @@ The included sample demonstrates Juke with a Spring Boot REST service and a Reac
 ### Step 1 — Build
 
 ```bash
-cd juke
+cd juke-community
 mvn clean install
 ```
 
