@@ -7,6 +7,7 @@ Standalone, idempotent. Run from repo root:
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -85,6 +86,107 @@ def _link_callback(uri: str, rel: str) -> str:
     if not path.is_absolute():
         path = REPO / uri
     return str(path)
+
+
+def _constrain_table_columns(html: str) -> str:
+    """Pin every table's columns to explicit, equal widths.
+
+    xhtml2pdf sizes a column to the *natural* width of its widest content.
+    A long, unbreakable token — a dotted config key like
+    ``juke.coverage.threshold.server.instruction`` or a path default like
+    ``${user.home}/juke-demo/coverage/server`` — has no break opportunity, so
+    its column grows past the page frame and the text bleeds into the
+    neighbouring cell (Chapter 12's Key/Default columns are the worst case).
+
+    Giving each column a fixed width (via the header cells, the widths a
+    column actually adopts) overrides that content-based sizing. But a fixed
+    width is not enough on its own: ReportLab (which renders each cell) does
+    **not** auto-split an unbreakable ``<code>`` token (no U+200B / soft-hyphen
+    break either), so it still overruns the fixed cell. So we also insert hard
+    ``<br/>`` breaks inside long ``<code>`` tokens, sized to the column: the
+    token is packed greedily onto lines no wider than the cell, breaking at a
+    natural separator (``. / - _ : }``) where possible. ReportLab honours
+    ``<br/>``, so the token now wraps within its cell.
+
+    Widths are merged into any existing ``style`` so column alignment from
+    Markdown (``:---:`` etc.) is preserved.
+    """
+    def fix_table(match: re.Match) -> str:
+        table = match.group(0)
+        first_row = re.search(r"<tr\b[^>]*>(.*?)</tr>", table, re.S)
+        if not first_row:
+            return table
+        row_html = first_row.group(1)
+        tag = "th" if re.search(r"<th\b", row_html) else "td"
+        ncols = len(re.findall(rf"<{tag}\b", row_html))
+        if ncols < 2:
+            return table  # nothing to balance
+        width = round(100.0 / ncols, 2)
+
+        def add_width(cell: re.Match) -> str:
+            attrs = cell.group(1)  # existing attributes ("" or e.g. ' style="..."')
+            if 'style="' in attrs:
+                attrs = re.sub(r'style="', f'style="width: {width}%; ', attrs, count=1)
+            else:
+                attrs = f'{attrs} style="width: {width}%"'
+            return f"<{tag}{attrs}>"
+
+        new_row = re.sub(rf"<{tag}(\b[^>]*)?>", add_width, row_html)
+        table = table.replace(row_html, new_row, 1)
+        return _break_code_tokens(table, _max_code_chars(ncols))
+
+    return re.sub(r"<table\b.*?</table>", fix_table, html, flags=re.S)
+
+
+# Letter page (612pt) minus 0.85in margins each side; chrome = cell padding+border.
+_CONTENT_WIDTH_PT = 612.0 - 2 * 0.85 * 72.0
+_CELL_CHROME_PT = 14.0
+_CODE_FONT, _CODE_SIZE = "Consolas", 9.5
+# Separators inside a code token after which a line break reads naturally.
+_CODE_BREAK_AFTER = frozenset("./_-:}")
+
+
+def _consolas_char_width() -> float:
+    """Advance width of one monospace code char, for sizing line lengths.
+    Falls back to a ratio estimate if the font isn't registered yet."""
+    try:
+        from reportlab.pdfbase.pdfmetrics import stringWidth
+        return stringWidth("0" * 20, _CODE_FONT, _CODE_SIZE) / 20.0
+    except Exception:
+        return 0.55 * _CODE_SIZE
+
+
+def _max_code_chars(ncols: int) -> int:
+    """How many monospace chars fit on one line of an equal-width column."""
+    usable = (_CONTENT_WIDTH_PT / ncols) - _CELL_CHROME_PT
+    return max(8, int(usable / _consolas_char_width()))
+
+
+def _break_code_tokens(html: str, max_chars: int) -> str:
+    """Insert hard ``<br/>`` breaks inside long ``<code>`` tokens so they wrap
+    within a fixed-width cell. Packs greedily onto lines of at most
+    ``max_chars``, preferring to break just after a natural separator; HTML
+    entities (``&...;``) are treated as single units so they're never split."""
+    def break_token(text: str) -> str:
+        if len(text) <= max_chars:
+            return text
+        units = re.findall(r"&[#0-9A-Za-z]+;|.", text, re.S)
+        soft = max(4, int(max_chars * 0.6))
+        out, line = [], 0
+        for idx, unit in enumerate(units):
+            out.append(unit)
+            line += 1
+            if idx == len(units) - 1:
+                break  # never break after the final unit
+            ends_sep = len(unit) == 1 and unit in _CODE_BREAK_AFTER
+            if line >= max_chars or (ends_sep and line >= soft):
+                out.append("<br/>")
+                line = 0
+        return "".join(out)
+
+    return re.sub(r"(<code>)(.*?)(</code>)",
+                  lambda m: m.group(1) + break_token(m.group(2)) + m.group(3),
+                  html, flags=re.S)
 
 
 def _wrap_fallback_glyphs(html: str) -> str:
@@ -213,7 +315,7 @@ em { color: inherit; }
 
 FOOTER = (
     '<div id="footerContent" class="footer">'
-    'Juke Manual &middot; Covers Juke 0.0.1 &middot; Page '
+    'Juke Manual &middot; Covers Juke 1.0.0 &middot; Page '
     '<pdf:pagenumber /> of <pdf:pagecount />'
     '</div>'
 )
@@ -246,6 +348,7 @@ def main() -> int:
     pygments_css = HtmlFormatter(style="friendly").get_style_defs(".codehilite")
 
     css = CSS + "\n" + pygments_css
+    html_body = _constrain_table_columns(html_body)
     html_body = _wrap_fallback_glyphs(html_body)
 
     html = (

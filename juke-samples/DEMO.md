@@ -107,8 +107,8 @@ mvn -DskipTests install
 This produces (among others):
 
 ```
-juke-samples/juke-sample-greeting/target/juke-sample-greeting-0.0.1-SNAPSHOT.jar
-juke-samples/juke-sample-todo/target/juke-sample-todo-0.0.1-SNAPSHOT.jar
+juke-samples/juke-sample-greeting/target/juke-sample-greeting-1.0.0.jar
+juke-samples/juke-sample-todo/target/juke-sample-todo-1.0.0.jar
 ```
 
 The greeting jar bundles a React UI under `/`. The todo jar exposes a
@@ -183,7 +183,7 @@ Start the greeting sample with `~/juke-demo` as the storage path:
 java "-Djuke.enabled=true" \
      "-Djuke.path=$HOME/juke-demo" \
      "-Djuke.zip=demo" \
-     -jar juke-samples/juke-sample-greeting/target/juke-sample-greeting-0.0.1-SNAPSHOT.jar &
+     -jar juke-samples/juke-sample-greeting/target/juke-sample-greeting-1.0.0.jar &
 ```
 
 (On PowerShell drop the trailing `&` — PowerShell uses
@@ -294,7 +294,7 @@ java "-Djuke.enabled=true" \
      "-Djuke.path=$HOME/juke-demo" \
      "-Djuke.zip=demo" \
      "-Djuke.args-validation=strict" \
-     -jar juke-samples/juke-sample-greeting/target/juke-sample-greeting-0.0.1-SNAPSHOT.jar &
+     -jar juke-samples/juke-sample-greeting/target/juke-sample-greeting-1.0.0.jar &
 ```
 
 Open a fresh session and drive the same number of calls as the
@@ -477,7 +477,7 @@ java "-Djuke.enabled=true" \
      "-Djuke.path=$HOME/juke-demo" \
      "-Djuke.zip=todos" \
      "-Djuke.args-validation=strict" \
-     -jar juke-samples/juke-sample-todo/target/juke-sample-todo-0.0.1-SNAPSHOT.jar &
+     -jar juke-samples/juke-sample-todo/target/juke-sample-todo-1.0.0.jar &
 
 # Record three creates.
 curl -s "http://localhost:8080/service/record/start?track=todos"
@@ -495,7 +495,7 @@ java "-Djuke.enabled=true" \
      "-Djuke.path=$HOME/juke-demo" \
      "-Djuke.zip=todos" \
      "-Djuke.args-validation=strict" \
-     -jar juke-samples/juke-sample-todo/target/juke-sample-todo-0.0.1-SNAPSHOT.jar &
+     -jar juke-samples/juke-sample-todo/target/juke-sample-todo-1.0.0.jar &
 
 # Drive some pre-test traffic to push the in-memory counter forward.
 curl -s -X POST -H 'Content-Type: application/json' \
@@ -513,7 +513,7 @@ against this todo backend, save both as JSON, and diff:
 
 ```bash
 # Hypothetical CLI runner — see PlaywrightComparisonEngine for the API.
-java -cp juke-framework/target/juke-framework-0.0.1-SNAPSHOT.jar \
+java -cp juke-framework/target/juke-framework-1.0.0.jar \
      org.juke.framework.playwright.ComparisonRunner \
      --baseline baseline-run.json \
      --actual current-run.json \

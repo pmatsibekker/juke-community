@@ -32,7 +32,7 @@ Both endpoints always respond `200`. When coverage is unavailable (no agent atta
 <dependency>
     <groupId>org.juke.harnesss</groupId>
     <artifactId>juke-coverage</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 

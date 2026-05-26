@@ -7,7 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 /**
  * REST CRUD sample. The {@link ToDoController} exposes
  * GET / POST / PUT / DELETE on {@code /todos}. The {@link ToDoDAO}
- * routes every call through a {@code @Juke}-wrapped service
+ * routes every call through a {@code @Juke("juke")}-wrapped service
  * field so every verb's request/response is captured into the active
  * track and replayed on subsequent runs without invoking
  * {@link ToDoServiceImpl}.

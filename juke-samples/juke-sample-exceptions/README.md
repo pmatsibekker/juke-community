@@ -131,7 +131,7 @@ juke-sample-exceptions/
 │   ├── java/com/example/exceptions/
 │   │   ├── OrderApplication.java         Spring Boot main; scans org.juke.framework + org.juke.remix
 │   │   ├── OrderController.java          GET /api/products, POST /api/order
-│   │   ├── OrderService.java             @Juke OMS seam; try→COMPLETED / catch→RECORDED
+│   │   ├── OrderService.java             @Juke("juke") OMS seam; try→COMPLETED / catch→RECORDED
 │   │   ├── IOrderManagementSystem.java   The seam interface (submitOrder throws IOException)
 │   │   ├── OrderManagementSystemImpl.java Dummy OMS — the displaced impl, excluded from coverage
 │   │   ├── OmsOrderRequest.java          @JukeIgnorable confirmationNumber
@@ -156,9 +156,8 @@ juke-sample-exceptions/
 
 ## Juke features this sample exercises
 
-- **`@Juke` on the seam** — records under global record mode (no cookie) and replays
-  per-session when a `JUKE_SESSION` cookie is present. One annotation covers both
-  (the value defaults to `"juke"`; only the non-default states need an explicit string).
+- **`@Juke("juke")` on the seam** — records under global record mode (no cookie) and replays
+  per-session when a `JUKE_SESSION` cookie is present. One annotation covers both.
 - **Per-session replay + reports** — each replay run is `session/start?track=order-demo&description=…`
   → drive → `session/stop`; `GET /service/recording/report?track=order-demo` shows one session per run.
 - **`@JukeIgnorable`** — the changing confirmation number is skipped in the replay input-diff, so

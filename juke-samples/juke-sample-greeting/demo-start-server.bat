@@ -30,7 +30,7 @@ echo Using Java: && java -version
 
 :: ── Locate the greeting JAR ────────────────────────────────────────────────────
 :: Script lives in juke-sample-greeting/, so the JAR is in target/ (same folder).
-set JAR=%~dp0target\juke-sample-greeting-0.0.1-SNAPSHOT.jar
+set JAR=%~dp0target\juke-sample-greeting-1.0.0.jar
 if not exist "%JAR%" (
     echo.
     echo ERROR: JAR not found:

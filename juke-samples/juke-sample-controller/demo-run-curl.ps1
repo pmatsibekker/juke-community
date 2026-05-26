@@ -31,7 +31,7 @@ function Invoke-Curl([string]$url) {
 
 # -- Verify server is reachable ----------------------------------------------
 Write-Host "Checking server at $Base ..." -ForegroundColor Cyan
-$code = (& $curl -s -o NUL -w "%{http_code}" "$Base/api/greet/Ping")
+$code = (& $curl -s -o $null -w "%{http_code}" "$Base/api/greet/Ping")
 if ($code -notmatch '^[23]\d\d$') {
     Write-Error @"
 Server is not responding on $Base (got HTTP '$code').

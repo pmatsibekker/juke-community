@@ -39,7 +39,7 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 echo Using Java: && java -version
 
 :: ── Locate the JAR ────────────────────────────────────────────────────────────
-set JAR=%~dp0target\juke-sample-coverage-0.0.1-SNAPSHOT.jar
+set JAR=%~dp0target\juke-sample-coverage-1.0.0.jar
 if not exist "%JAR%" (
     echo.
     echo ERROR: JAR not found:

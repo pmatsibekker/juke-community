@@ -19,10 +19,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class JukeConstructorExample {
 
-    @Juke
+    @Juke("juke")
     protected IGreetingsService greetingService;
 
-    @Juke
+    @Juke("juke")
     protected IAnotherService anotherService;
 
     @Autowired

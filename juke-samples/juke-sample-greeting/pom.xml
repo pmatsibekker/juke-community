@@ -13,7 +13,7 @@
 
     <groupId>org.juke</groupId>
     <artifactId>juke-sample-greeting</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>juke-sample-greeting</name>
     <description>
@@ -53,12 +53,12 @@
         <dependency>
             <groupId>org.juke.harnesss</groupId>
             <artifactId>juke-framework</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.juke.harnesss</groupId>
             <artifactId>juke-remix-rest-service</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <!--
             Opt-in functional code-coverage capability. Carries no runtime cost
@@ -69,7 +69,7 @@
         <dependency>
             <groupId>org.juke.harnesss</groupId>
             <artifactId>juke-coverage</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 

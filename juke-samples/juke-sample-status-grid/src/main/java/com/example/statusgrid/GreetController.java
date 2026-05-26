@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Drives the seam. {@code @Juke} records globally and replays per
+ * Drives the seam. {@code @Juke("juke")} records globally and replays per
  * cookie session, so each request carrying a {@code JUKE_SESSION} cookie
  * advances that session's position in the recording.
  */
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class GreetController {
 
-    @Juke
+    @Juke("juke")
     @Autowired
     GreetingService greetingService;
 

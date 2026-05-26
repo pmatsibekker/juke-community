@@ -13,7 +13,7 @@
 
     <groupId>org.juke.harnesss</groupId>
     <artifactId>juke-coverage</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>juke-coverage</name>
     <description>
@@ -35,7 +35,7 @@
         <dependency>
             <groupId>org.juke.harnesss</groupId>
             <artifactId>juke-framework</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
 
         <!-- JaCoCo analyzer — turns raw execution data + class files into

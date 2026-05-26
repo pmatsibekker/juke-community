@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 /**
  * Places orders with the OMS through the {@code @Juke} seam.
  *
- * <p>The {@code @Juke} field follows the global mode when no session
+ * <p>The {@code @Juke("juke")} field follows the global mode when no session
  * cookie is present (so {@code /service/record/start} captures real calls) and
  * routes to the per-session replay handler when a {@code JUKE_SESSION} cookie is
  * present (so each replay run is its own isolated session with its own report).
@@ -23,7 +23,7 @@ public class OrderService {
 
     private static final Logger LOG = LoggerFactory.getLogger(OrderService.class);
 
-    @Juke
+    @Juke("juke")
     private IOrderManagementSystem oms;
 
     @Autowired

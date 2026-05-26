@@ -13,7 +13,7 @@
 
     <groupId>org.juke</groupId>
     <artifactId>juke-sample-exceptions</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>juke-sample-exceptions</name>
     <description>
@@ -56,18 +56,18 @@
         <dependency>
             <groupId>org.juke.harnesss</groupId>
             <artifactId>juke-framework</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.juke.harnesss</groupId>
             <artifactId>juke-remix-rest-service</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <!-- Functional coverage (server JaCoCo + UI nyc) shown in the popup. -->
         <dependency>
             <groupId>org.juke.harnesss</groupId>
             <artifactId>juke-coverage</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 

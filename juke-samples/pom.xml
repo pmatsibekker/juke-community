@@ -6,7 +6,7 @@
 
     <groupId>org.juke</groupId>
     <artifactId>juke-samples</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>juke-samples</name>
     <description>

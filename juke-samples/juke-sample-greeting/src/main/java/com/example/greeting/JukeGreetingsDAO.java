@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JukeGreetingsDAO {
 
-    @Juke
+    @Juke("juke")
     IGreetingsService greetingService;
 
     @Autowired

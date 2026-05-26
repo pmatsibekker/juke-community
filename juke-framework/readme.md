@@ -25,7 +25,7 @@ Add `juke-remix-rest-service` alongside it to get the `/service/*` HTTP control 
 <dependency>
     <groupId>org.juke.harnesss</groupId>
     <artifactId>juke-framework</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 

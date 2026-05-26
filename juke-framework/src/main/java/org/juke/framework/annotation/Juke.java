@@ -13,12 +13,9 @@ import java.lang.annotation.Target;
  * <h3>Field / parameter usage (wraps an injected dependency):</h3>
  * <pre>
  * &#64;Autowired
- * &#64;Juke
+ * &#64;Juke("juke")
  * private IGreetingsService service;
  * </pre>
- * The bare {@code @Juke} uses the default value {@code "juke"} (record globally,
- * replay per-session). Pass an explicit value only when you need a different
- * state — {@code @Juke("none")}, {@code @Juke("record")}, etc.
  * 
  * <h3>Type-level usage (wraps the entire component — works with concrete classes):</h3>
  * <pre>

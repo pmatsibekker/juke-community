@@ -43,7 +43,7 @@ Write-Host "Using Java: $((& java -version 2>&1)[0])" -ForegroundColor Cyan
 # ── Locate the greeting JAR ────────────────────────────────────────────────────
 # Script lives in juke-sample-greeting/, so the JAR is in target/ (same folder).
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$JAR = Join-Path $ScriptDir "target\juke-sample-greeting-0.0.1-SNAPSHOT.jar"
+$JAR = Join-Path $ScriptDir "target\juke-sample-greeting-1.0.0.jar"
 
 if (-not (Test-Path $JAR)) {
     Write-Error @"

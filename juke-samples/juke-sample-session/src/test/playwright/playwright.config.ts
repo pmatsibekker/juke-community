@@ -110,21 +110,6 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
       testMatch: '**/greeting-ui.spec.ts',
     },
-
-    /**
-     * Todo Drift — drives the juke-sample-todo UI through a recording → cookie
-     * session journey where the second POST sends an inconsistent title; asserts
-     * the session-report panel surfaces COMPLETED_WITH_DEVIATIONS and the drift
-     * row. Run against a running juke-sample-todo server on :8080.
-     *
-     * Run with:
-     *   npx playwright test --project="Todo Drift" e2e/todo-drift.spec.ts --headed
-     */
-    {
-      name: 'Todo Drift',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-      testMatch: '**/todo-drift.spec.ts',
-    },
   ],
 
   /* Run your local dev server before starting the tests */

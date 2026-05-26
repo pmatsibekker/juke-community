@@ -127,7 +127,7 @@ class JukeBeanPostProcessorTest {
     // ── valid interface field → wraps with proxy ──────────────────────────
 
     static class JukeFieldBean {
-        @Juke
+        @Juke("juke")
         public ISampleService service;
     }
 

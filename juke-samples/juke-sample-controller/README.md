@@ -40,3 +40,21 @@ mvn -o -pl juke-samples/juke-sample-controller -am test
 # or boot it and open http://localhost:8080
 mvn -pl juke-samples/juke-sample-controller spring-boot:run
 ```
+
+### Two-window curl demo (Windows)
+
+Build the jar once, then run the server in one window and the curl client in
+another. The poisoned replay logs `CONTROLLER_MISMATCH` in the **server**
+window (the advice reports drift server-side and never alters the response):
+
+```bat
+mvn -pl juke-samples/juke-sample-controller -am package -DskipTests
+
+:: window 1 — start the server (leave it open, watch for CONTROLLER_MISMATCH)
+juke-samples\juke-sample-controller\demo-start-server.bat
+
+:: window 2 — drive record -> clean replay -> poisoned replay
+juke-samples\juke-sample-controller\demo-run-curl.bat
+```
+
+PowerShell equivalents: `demo-start-server.ps1` and `demo-run-curl.ps1`.

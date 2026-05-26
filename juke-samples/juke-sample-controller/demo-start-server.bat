@@ -32,7 +32,7 @@ echo Using Java: && java -version
 
 :: -- Locate the controller JAR ------------------------------------------------
 :: Script lives in juke-sample-controller/, so the JAR is in target/ (same folder).
-set JAR=%~dp0target\juke-sample-controller-0.0.1-SNAPSHOT.jar
+set JAR=%~dp0target\juke-sample-controller-1.0.0.jar
 if not exist "%JAR%" (
     echo.
     echo ERROR: JAR not found:
