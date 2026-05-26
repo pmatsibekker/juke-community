@@ -100,29 +100,6 @@ Recordings turn real behavior into a deterministic asset. That is Juke's core id
 > stronger evidence than a passing unit test, while still being stable enough to
 > run repeatedly as part of normal development.
 
-### Why the Whole System Matters
-
-Modern applications do not keep their logic neatly on one side of the boundary.
-Validation, retries, feature flags, formatting, optimistic updates, loading
-states, fallback behavior, permission checks, and error handling are often
-distributed across browser code and server code together. The user experiences
-the *composition* of those pieces, not either side in isolation.
-
-That is why testing the UI and the server as separate concerns is increasingly
-insufficient. A server unit test can prove that an endpoint returns a field; a
-UI unit test can prove that a component renders a field; neither proves that the
-right data crosses the boundary, at the right time, in the right shape, under
-the right real-world conditions. Whole-system behavioral testing answers a
-different question: not "did the UI logic pass?" and not "did the server logic
-pass?" but **"did the user journey work?"** — the level at which many expensive
-bugs actually live.
-
-This does not make unit tests obsolete; it changes their role. Unit tests are
-best for local correctness; whole-system behavioral tests are best for feature
-correctness. You need both — but if forced to choose which one should carry the
-stronger claim about whether the product works, the answer is the test that
-drives the product the way its users do.
-
 ### The AI-Test Trap
 
 AI coding assistants make this structural weakness acute. A model that writes
@@ -167,6 +144,30 @@ defensible validation gate is therefore:
 Unit tests guard against regressions in behavior you already understand. The
 behavioral journey tells you whether the behavior was ever right to begin with —
 and whether it has quietly drifted since.
+### Why the Whole System Matters
+
+Modern applications do not keep their logic neatly on one side of the boundary.
+Validation, retries, feature flags, formatting, optimistic updates, loading
+states, fallback behavior, permission checks, and error handling are often
+distributed across browser code and server code together. The user experiences
+the *composition* of those pieces, not either side in isolation.
+
+That is why testing the UI and the server as separate concerns is increasingly
+insufficient. A server unit test can prove that an endpoint returns a field; a
+UI unit test can prove that a component renders a field; neither proves that the
+right data crosses the boundary, at the right time, in the right shape, under
+the right real-world conditions. Whole-system behavioral testing answers a
+different question: not "did the UI logic pass?" and not "did the server logic
+pass?" but **"did the user journey work?"** — the level at which many expensive
+bugs actually live.
+
+This does not make unit tests obsolete; it changes their role. Unit tests are
+best for local correctness; whole-system behavioral tests are best for feature
+correctness. You need both — but if forced to choose which one should carry the
+stronger claim about whether the product works, the answer is the test that
+drives the product the way its users do.
+
+
 
 ---
 
