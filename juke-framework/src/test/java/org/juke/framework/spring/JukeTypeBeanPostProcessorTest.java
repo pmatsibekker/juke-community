@@ -76,7 +76,8 @@ class JukeTypeBeanPostProcessorTest {
         JukeState.setGlobaljuke(JukeState.IGNORE);
         JukeIgnoreBean bean = new JukeIgnoreBean();
         Object result = processor.postProcessAfterInitialization(bean, "ign");
-        assertSame(bean, result);
+        assertNotSame(bean, result);
+        assertTrue(result.getClass().getName().contains("$$"));
     }
 
     @Juke("none")

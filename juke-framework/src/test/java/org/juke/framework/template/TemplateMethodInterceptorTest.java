@@ -66,6 +66,9 @@ public class TemplateMethodInterceptorTest {
     private SampleTemplate realTemplate;
     private String savedGlobalJuke;
     private String zipName;
+    private String savedJukeProp;
+    private String savedJukePathProp;
+    private String savedJukeZipProp;
 
     @BeforeEach
     void setUp() {
@@ -73,6 +76,14 @@ public class TemplateMethodInterceptorTest {
 
         // Save and reset global state so other tests don't interfere
         savedGlobalJuke = JukeState.getGlobaljuke();
+
+        // Save system properties to restore in tearDown
+        savedJukeProp = System.getProperty("juke");
+        savedJukePathProp = System.getProperty("juke.path");
+        savedJukeZipProp = System.getProperty("juke.zip");
+
+        // Clear "juke" mode system property to avoid pollution from other tests
+        System.clearProperty("juke");
 
         // Use a UNIQUE zip name per test. A single shared "template-test.zip" in
         // the common temp dir is fragile: if a prior run's JVM was killed
@@ -101,6 +112,23 @@ public class TemplateMethodInterceptorTest {
         if (zipName != null) {
             //noinspection ResultOfMethodCallIgnored
             new File(ConfigUtil.getDefauljukePath(), zipName + ".zip").delete();
+        }
+
+        // Restore system properties
+        if (savedJukeProp != null) {
+            System.setProperty("juke", savedJukeProp);
+        } else {
+            System.clearProperty("juke");
+        }
+        if (savedJukePathProp != null) {
+            System.setProperty("juke.path", savedJukePathProp);
+        } else {
+            System.clearProperty("juke.path");
+        }
+        if (savedJukeZipProp != null) {
+            System.setProperty("juke.zip", savedJukeZipProp);
+        } else {
+            System.clearProperty("juke.zip");
         }
     }
 

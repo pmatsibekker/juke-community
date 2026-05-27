@@ -42,14 +42,6 @@ public class JukeTypeBeanPostProcessor implements BeanPostProcessor {
             return bean;
         }
 
-        // Only wrap when the global state is RECORD or REPLAY (or "juke")
-        String mode = resolveMode(juke.value());
-        if (JukeState.IGNORE.equalsIgnoreCase(mode)
-                || JukeState.NONE.equalsIgnoreCase(mode)) {
-            LOG.debug("@Juke on {} ignored — mode is {}", beanClass.getSimpleName(), mode);
-            return bean;
-        }
-
         LOG.info("Wrapping @Juke bean '{}' ({}) with CGLIB proxy",
                 beanName, beanClass.getName());
 
@@ -80,13 +72,6 @@ public class JukeTypeBeanPostProcessor implements BeanPostProcessor {
             }
         }
         return clazz;
-    }
-
-    private String resolveMode(String annotationValue) {
-        // Resolve against the global state, same logic as JukeFactory
-        return org.juke.framework.proxy.JukeFactory.resolveJukeState(
-                annotationValue == null || annotationValue.isEmpty()
-                        ? JukeState.JUKE : annotationValue);
     }
 }
 

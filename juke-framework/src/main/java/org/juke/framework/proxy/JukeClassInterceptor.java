@@ -3,6 +3,10 @@ package org.juke.framework.proxy;
 import org.juke.framework.storage.JukeHelper;
 import org.juke.framework.exception.JukeAccessException;
 import org.juke.framework.metadata.JukeParser;
+import org.juke.framework.config.JukeSpringContextHolder;
+import org.juke.framework.session.JukeSessionContext;
+import org.juke.framework.session.SessionRegistry;
+import org.springframework.context.ApplicationContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cglib.proxy.MethodInterceptor;
@@ -45,6 +49,29 @@ public class JukeClassInterceptor implements MethodInterceptor {
         if (!JukeMethodFilter.shouldIntercept(method)) {
             return methodProxy.invoke(realTarget, args);
         }
+
+        // --- NEW: check for active per-session playback context ---
+        try {
+            ApplicationContext appCtx = JukeSpringContextHolder.get();
+            if (appCtx != null) {
+                JukeSessionContext sessionCtx = appCtx.getBean(JukeSessionContext.class);
+                if (sessionCtx.isPlaybackActive()) {
+                    SessionRegistry registry = appCtx.getBean(SessionRegistry.class);
+                    if (registry.get(sessionCtx.getSessionId()).isPresent()) {
+                        LOG.debug("Session-aware replay active for concrete class {} (session {})",
+                                concreteClass.getSimpleName(), sessionCtx.getSessionId());
+                        @SuppressWarnings("unchecked")
+                        Class<Object> erased = (Class<Object>) concreteClass;
+                        SessionAwareReplayHandler<Object> handler = new SessionAwareReplayHandler<>(
+                                realTarget, erased, sessionCtx, registry);
+                        return handler.invoke(proxy, method, args);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.trace("No active Juke session context for concrete class: {}", e.getMessage());
+        }
+        // --- END session-aware check ---
 
         String mode = JukeFactory.resolveJukeState(JukeState.JUKE);
 
