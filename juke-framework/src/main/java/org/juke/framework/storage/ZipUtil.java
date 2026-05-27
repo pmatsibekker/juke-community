@@ -94,8 +94,14 @@ public class ZipUtil {
 	}
 
 	public String getZipName() {
-		return zipPath + DELIM + identifier + ZIP;
-
+		String defaultName = zipPath + DELIM + identifier + ZIP;
+		if (!new File(defaultName).exists()) {
+			String upperName = zipPath + DELIM + identifier + ".ZIP";
+			if (new File(upperName).exists()) {
+				return upperName;
+			}
+		}
+		return defaultName;
 	}
 
 
