@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>org.juke</groupId>
+    <groupId>io.github.pmatsibekker</groupId>
     <artifactId>juke-sample-todo</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -24,6 +24,7 @@
     </description>
 
     <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
         <java.version>25</java.version>
         <argLine/>
     </properties>
@@ -39,12 +40,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.juke.harnesss</groupId>
+            <groupId>io.github.pmatsibekker</groupId>
             <artifactId>juke-framework</artifactId>
             <version>1.0.0</version>
         </dependency>
         <dependency>
-            <groupId>org.juke.harnesss</groupId>
+            <groupId>io.github.pmatsibekker</groupId>
             <artifactId>juke-remix-rest-service</artifactId>
             <version>1.0.0</version>
         </dependency>

@@ -1,14 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.0</version>
-		<relativePath/>
+		<groupId>io.github.pmatsibekker</groupId>
+		<artifactId>juke-test-harness</artifactId>
+		<version>1.0.0</version>
 	</parent>
-	<groupId>org.juke.harnesss</groupId>
 	<artifactId>juke-remix-rest-service</artifactId>
-	<version>1.0.0</version>
 	<packaging>jar</packaging>
 	<name>juke-remix-rest-service</name>
 	<description>Juke agent — Community-clean record/replay/session REST surface and plugin registration relay</description>
@@ -16,6 +13,20 @@
 	<properties>
 		<java.version>25</java.version>
 	</properties>
+
+	<!-- Supplies managed versions for the unversioned Spring Boot starters
+	     below now that this module no longer inherits spring-boot-starter-parent. -->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>${spring.boot.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<!--
 	  Community-clean agent module. JPA / Spring Data / Flyway / H2 are not on
@@ -42,12 +53,12 @@
 			<version>2.16.1</version>
 		</dependency>
 		<dependency>
-			<groupId>org.juke.harnesss</groupId>
+			<groupId>io.github.pmatsibekker</groupId>
 			<artifactId>juke-framework</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
-			<groupId>org.juke.harnesss</groupId>
+			<groupId>io.github.pmatsibekker</groupId>
 			<artifactId>juke-plugin-api</artifactId>
 			<version>1.0.0</version>
 		</dependency>
@@ -125,6 +136,17 @@
 				<configuration>
 					<classifier>exec</classifier>
 				</configuration>
+				<!-- repackage no longer auto-bound now that this module does not
+				     inherit spring-boot-starter-parent; declare it so the bootable
+				     -exec jar is still produced alongside the plain library jar. -->
+				<executions>
+					<execution>
+						<id>repackage</id>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

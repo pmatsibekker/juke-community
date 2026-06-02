@@ -8,15 +8,17 @@
    <!-- ***************** PARENT POM ***************** -->
    <!-- ********************************************** -->
 
- 
+   <parent>
+      <groupId>io.github.pmatsibekker</groupId>
+      <artifactId>juke-test-harness</artifactId>
+      <version>1.0.0</version>
+   </parent>
 
    <!-- ********************************************** -->
    <!-- **************** PROJECT INFO **************** -->
    <!-- ********************************************** -->
 
-   <groupId>org.juke.harnesss</groupId>
    <artifactId>juke-framework</artifactId>
-   <version>1.0.0</version>
    <packaging>jar</packaging>
 
    <name>juke-framework</name>
