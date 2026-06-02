@@ -5,15 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.0</version>
-        <relativePath/>
+        <groupId>io.github.pmatsibekker</groupId>
+        <artifactId>juke-test-harness</artifactId>
+        <version>1.0.0</version>
     </parent>
 
-    <groupId>org.juke.harnesss</groupId>
     <artifactId>juke-coverage</artifactId>
-    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>juke-coverage</name>
     <description>
@@ -29,11 +26,25 @@
         <jacoco.version>0.8.14</jacoco.version>
     </properties>
 
+    <!-- Supplies managed versions for the unversioned Spring Boot starters
+         below now that this module no longer inherits spring-boot-starter-parent. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <!-- Juke core framework — supplies JukeMockRegistry, the authoritative
              record of which implementation classes Juke displaced with proxies. -->
         <dependency>
-            <groupId>org.juke.harnesss</groupId>
+            <groupId>io.github.pmatsibekker</groupId>
             <artifactId>juke-framework</artifactId>
             <version>1.0.0</version>
         </dependency>

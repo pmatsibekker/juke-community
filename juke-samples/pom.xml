@@ -4,11 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.juke</groupId>
+    <groupId>io.github.pmatsibekker</groupId>
     <artifactId>juke-samples</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>juke-samples</name>
+
+    <properties>
+        <!-- Demo apps are not published to Maven Central. -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
     <description>
         Aggregator for the Juke sample applications. Each child module is a
         self-contained Spring Boot app demonstrating one Juke pattern:
