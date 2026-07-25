@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "browserify": "^9.0.3",
+    "browserify": "^17.0.1",
     "gulp": "^3.8.11",
     "react": "^0.13.1",
     "reactify": "^1.1.0",
