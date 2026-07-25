@@ -58,7 +58,7 @@
       <apache.commons.collections.version>4.4</apache.commons.collections.version>
       <hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
       <hibernate.ehcache.version>6.2.7.Final</hibernate.ehcache.version>
-      <jackson.version>2.17.1</jackson.version>
+      <jackson.version>2.18.8</jackson.version>
 
      
       <spring.data.version>3.4.5</spring.data.version>
