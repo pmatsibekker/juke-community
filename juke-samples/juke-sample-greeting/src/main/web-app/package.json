@@ -20,8 +20,8 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.1",
-    "vite": "^5.4.2",
-    "vite-plugin-istanbul": "^6.0.2"
+    "@vitejs/plugin-react": "^6.0.4",
+    "vite": "^8.1.5",
+    "vite-plugin-istanbul": "^9.0.1"
   }
 }
