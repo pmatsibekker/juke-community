@@ -3,7 +3,10 @@ package org.juke.framework.proxy;
 import org.juke.framework.config.JukeSpringContextHolder;
 import org.juke.framework.runtime.JukeRuntimeHolder;
 import org.juke.framework.session.JukeSessionContext;
+import org.juke.framework.session.JukeSessionEntry;
 import org.juke.framework.session.SessionRegistry;
+import org.juke.framework.storage.JukeStorage;
+import org.juke.framework.metadata.DataProgramSchedule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,18 +18,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Verifies the consolidation-plan claim that only the interface-field {@code @Juke}
- * path is session-aware: with an active {@code JUKE_SESSION}, the interface path
- * routes through {@link SessionAwareReplayHandler}, while class-level {@code @Juke}
- * ({@link JukeClassInterceptor}) and the concrete-field path
- * ({@link TemplateMethodInterceptor}) ignore the session entirely and decide purely
- * from the global mode.
+ * Verifies all proxy paths honour an active {@code JUKE_SESSION} and replay from
+ * the per-session DAO, even when the global mode is {@code IGNORE}.
  *
  * <p>A session is made "active" via a mocked {@link ApplicationContext} (the same
  * lightweight pattern as {@code JukeFactoryNewInstanceTest}). The global mode is set
- * to {@code IGNORE} (passthrough): a session-aware path would replay from the
- * session regardless, but the concrete paths fall through to the real target —
- * proving they never consult the session.
+ * to {@code IGNORE} (passthrough): session-aware paths must still replay from
+ * the session track.
  */
 class ConcretePathSessionAwarenessTest {
 
@@ -44,9 +42,26 @@ class ConcretePathSessionAwarenessTest {
         ApplicationContext appCtx = mock(ApplicationContext.class);
         JukeSessionContext sc = mock(JukeSessionContext.class);
         SessionRegistry reg = mock(SessionRegistry.class);
+        JukeSessionEntry sessionEntry = mock(JukeSessionEntry.class);
+        JukeStorage sessionDao = mock(JukeStorage.class);
+        DataProgramSchedule schedule = mock(DataProgramSchedule.class);
+
         when(sc.isPlaybackActive()).thenReturn(true);
         when(sc.getSessionId()).thenReturn("s1");
-        when(reg.get("s1")).thenReturn(Optional.empty());
+        when(reg.get("s1")).thenReturn(Optional.of(sessionEntry));
+        when(sessionEntry.getDao()).thenReturn(sessionDao);
+        when(sessionEntry.getScheduleFor(any())).thenReturn(schedule);
+        when(schedule.getNextAvailable(anyString())).thenAnswer(inv -> {
+            String key = inv.getArgument(0, String.class);
+            return key != null && key.contains("ConcreteThing")
+                    ? "ConcreteThing.value.1"
+                    : "Thing.value.1";
+        });
+        when(sessionDao.readFromFile(any(), eq("ConcreteThing.value.1"))).thenReturn("mocked-from-session");
+        when(sessionDao.asString("Thing.value.1")).thenReturn("\"mocked-from-session\"");
+        when(sessionDao.asString("Thing.value.1.type")).thenReturn(String.class.getName());
+        doNothing().when(sessionEntry).recordCall(anyString(), any());
+
         when(appCtx.getBean(JukeSessionContext.class)).thenReturn(sc);
         when(appCtx.getBean(SessionRegistry.class)).thenReturn(reg);
         new JukeSpringContextHolder().setApplicationContext(appCtx);
@@ -68,19 +83,19 @@ class ConcretePathSessionAwarenessTest {
     }
 
     @Test
-    void classLevelJuke_ignoresSession() {
+    void classLevelJuke_replaysFromSessionEvenWhenGlobalIgnore() {
         JukeState.setGlobaljuke(JukeState.IGNORE);   // global passthrough; session is active
         ConcreteThing proxy = JukeClassInterceptor.createProxy(new ConcreteThing(), ConcreteThing.class);
-        assertEquals("live", proxy.value(),
-                "class-level @Juke ignores the active session and uses only the global mode");
+        assertEquals("mocked-from-session", proxy.value(),
+                "class-level @Juke should replay from the active session DAO");
     }
 
     @Test
-    void concreteFieldPath_ignoresSession() {
+    void concreteFieldPath_replaysFromSessionEvenWhenGlobalIgnore() {
         JukeState.setGlobaljuke(JukeState.IGNORE);   // global passthrough; session is active
         IThing wrapped = TemplateRecordingWrapper.wrap(
                 new ThingImpl(), "Thing", JukeState.JUKE, new String[0], IThing.class);
-        assertEquals("live", wrapped.value(),
-                "the concrete-field path ignores the active session and uses only the global mode");
+        assertEquals("mocked-from-session", wrapped.value(),
+                "the concrete-field path should replay from the active session DAO");
     }
 }

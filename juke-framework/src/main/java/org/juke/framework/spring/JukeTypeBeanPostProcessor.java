@@ -42,11 +42,16 @@ public class JukeTypeBeanPostProcessor implements BeanPostProcessor {
             return bean;
         }
 
-        // Only wrap when the global state is RECORD or REPLAY (or "juke")
-        String mode = resolveMode(juke.value());
-        if (JukeState.IGNORE.equalsIgnoreCase(mode)
-                || JukeState.NONE.equalsIgnoreCase(mode)) {
-            LOG.debug("@Juke on {} ignored — mode is {}", beanClass.getSimpleName(), mode);
+        // Startup wrapping should not depend on the current global mode.
+        // Only an explicit local opt-out on the annotation bypasses wrapping.
+        String declaredMode = (juke.value() == null || juke.value().isEmpty())
+                ? JukeState.JUKE
+                : juke.value();
+        if (JukeState.IGNORE.equalsIgnoreCase(declaredMode)
+                || JukeState.NONE.equalsIgnoreCase(declaredMode)
+                || JukeState.DISABLE.equalsIgnoreCase(declaredMode)) {
+            LOG.debug("@Juke on {} not wrapped due to explicit annotation mode {}",
+                    beanClass.getSimpleName(), declaredMode);
             return bean;
         }
 
@@ -82,11 +87,5 @@ public class JukeTypeBeanPostProcessor implements BeanPostProcessor {
         return clazz;
     }
 
-    private String resolveMode(String annotationValue) {
-        // Resolve against the global state, same logic as JukeFactory
-        return org.juke.framework.proxy.JukeFactory.resolveJukeState(
-                annotationValue == null || annotationValue.isEmpty()
-                        ? JukeState.JUKE : annotationValue);
-    }
 }
 
