@@ -15,14 +15,15 @@ import org.juke.framework.storage.JukeZipDAOImpl;
 import org.juke.framework.exception.JukeAccessException;
 import org.juke.framework.metadata.DataProgramSchedule;
 import org.juke.framework.metadata.JukeStateBuilder;
+import org.juke.framework.session.JukeSessionEntry;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -105,6 +106,17 @@ public class TemplateMethodInterceptor implements InvocationHandler {
         // Never intercept infrastructure methods
         if (excludedMethods.contains(methodName)) {
             return method.invoke(realTemplate, args);
+        }
+
+        if (SessionPlaybackUtil.isGloballyDisabled()) {
+            return method.invoke(realTemplate, args);
+        }
+
+        if (shouldUseSessionReplay()) {
+            Optional<JukeSessionEntry> sessionEntry = SessionPlaybackUtil.resolveActiveSessionEntry();
+            if (sessionEntry.isPresent()) {
+                return handleSessionReplay(method, args, sessionEntry.get());
+            }
         }
 
         String effectiveState = resolveState();
@@ -192,7 +204,36 @@ public class TemplateMethodInterceptor implements InvocationHandler {
     } finally {
         lock.unlock();
     }
-}
+    }
+
+    private Object handleSessionReplay(Method method, Object[] args, JukeSessionEntry entry) throws Throwable {
+        String methodName = method.getName();
+        String baseId = templateName + "." + methodName;
+
+        DataProgramSchedule sessionSchedule = entry.getScheduleFor(realTemplate.getClass());
+        String sequencedId = sessionSchedule.getNextAvailable(baseId);
+        JukeStorage dao = entry.getDao();
+
+        try {
+            String typeMeta = readTypeMeta(dao, sequencedId);
+            Object result;
+            if (typeMeta != null) {
+                Class<?> runtimeType = Class.forName(typeMeta);
+                String json = dao.asString(sequencedId);
+                result = JukeTransformerUtil.readValueAsType(json, runtimeType);
+            } else {
+                String json = dao.asString(sequencedId);
+                result = objectMapper.readTree(json);
+            }
+
+            JukeHelper.validateInputArgs(sequencedId, method, args);
+            entry.recordCall(sequencedId, Instant.now());
+            return result;
+        } catch (Exception e) {
+            LOG.error("Failed to replay template result for {} from session DAO: {}", sequencedId, e.getMessage());
+            throw new JukeAccessException("Session replay failed for " + sequencedId + ": " + e.getMessage());
+        }
+    }
 
     /**
      * Reads the ".type" sidecar entry for a given identifier.
@@ -201,6 +242,15 @@ public class TemplateMethodInterceptor implements InvocationHandler {
     private String readTypeMeta(String identifier) {
         try {
             String meta = JukeRuntimeHolder.current().storage().asString(identifier + ".type");
+            return (meta != null && !meta.trim().isEmpty()) ? meta.trim() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String readTypeMeta(JukeStorage dao, String identifier) {
+        try {
+            String meta = dao.asString(identifier + ".type");
             return (meta != null && !meta.trim().isEmpty()) ? meta.trim() : null;
         } catch (Exception e) {
             return null;
@@ -251,6 +301,14 @@ public class TemplateMethodInterceptor implements InvocationHandler {
             }
         }
         return JukeState.IGNORE;
+    }
+
+    private boolean shouldUseSessionReplay() {
+        String localState = jukeState == null ? JukeState.JUKE : jukeState;
+        return !JukeState.RECORD.equalsIgnoreCase(localState)
+                && !JukeState.IGNORE.equalsIgnoreCase(localState)
+                && !JukeState.NONE.equalsIgnoreCase(localState)
+                && !JukeState.DISABLE.equalsIgnoreCase(localState);
     }
 
     // -------------------------------------------------------------- Accessors

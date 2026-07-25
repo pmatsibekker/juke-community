@@ -1,14 +1,17 @@
 package org.juke.framework.proxy;
 
 import org.juke.framework.storage.JukeHelper;
-import org.juke.framework.exception.JukeAccessException;
 import org.juke.framework.metadata.JukeParser;
+import org.juke.framework.session.JukeSessionEntry;
+import org.juke.framework.storage.JukeStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
 import java.lang.reflect.Method;
+import java.time.Instant;
+import java.util.Optional;
 
 /**
  * CGLIB {@link MethodInterceptor} that records/replays every eligible
@@ -46,6 +49,15 @@ public class JukeClassInterceptor implements MethodInterceptor {
             return methodProxy.invoke(realTarget, args);
         }
 
+        if (SessionPlaybackUtil.isGloballyDisabled()) {
+            return methodProxy.invoke(realTarget, args);
+        }
+
+        Optional<JukeSessionEntry> sessionEntry = SessionPlaybackUtil.resolveActiveSessionEntry();
+        if (sessionEntry.isPresent()) {
+            return replayFromSession(method, args, sessionEntry.get());
+        }
+
         String mode = JukeFactory.resolveJukeState(JukeState.JUKE);
 
         if (JukeState.RECORD.equalsIgnoreCase(mode)) {
@@ -56,6 +68,39 @@ public class JukeClassInterceptor implements MethodInterceptor {
         }
         // IGNORE / NONE — pass through
         return methodProxy.invoke(realTarget, args);
+    }
+
+    private Object replayFromSession(Method method, Object[] args, JukeSessionEntry sessionEntry) {
+        String methodName = buildMethodName(method);
+        String typeDiscriminator = TypeDiscriminatorUtil.extractTypeDiscriminator(method, args);
+
+        String shortDiscriminated = JukeNameFormatter.buildShortIdentifier(concreteClass, methodName, typeDiscriminator);
+        String shortPlain = JukeNameFormatter.buildShortIdentifier(concreteClass, methodName, null);
+        String legacyDiscriminated = TypeDiscriminatorUtil.buildRecordIdentifier(
+                concreteClass.getName() + ".$" + methodName, typeDiscriminator);
+        String legacyPlain = concreteClass.getName() + ".$" + methodName;
+
+        var schedule = sessionEntry.getScheduleFor(concreteClass);
+        String sequencedId;
+        if (typeDiscriminator != null && schedule.size(shortDiscriminated) > 0) {
+            sequencedId = schedule.getNextAvailable(shortDiscriminated);
+        } else if (schedule.size(shortPlain) > 0) {
+            sequencedId = schedule.getNextAvailable(shortPlain);
+        } else if (typeDiscriminator != null && schedule.size(legacyDiscriminated) > 0) {
+            sequencedId = schedule.getNextAvailable(legacyDiscriminated);
+        } else {
+            sequencedId = schedule.getNextAvailable(legacyPlain);
+        }
+
+        JukeStorage dao = sessionEntry.getDao();
+        Class<?> runtimeType = TypeDiscriminatorUtil.extractTypeDiscriminatorClass(method, args);
+        Object result = (runtimeType != null && runtimeType != Object.class)
+                ? dao.readFromFileAsType(concreteClass, sequencedId, runtimeType)
+                : dao.readFromFile(concreteClass, sequencedId);
+
+        JukeHelper.validateInputArgs(sequencedId, method, args);
+        sessionEntry.recordCall(sequencedId, Instant.now());
+        return result;
     }
 
     // -----------------------------------------------------------------
