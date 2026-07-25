@@ -8,11 +8,16 @@
   },
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "lodash": "4.17.1"
+  },
   "devDependencies": {
     "browserify": "^17.0.1",
     "gulp": "^3.8.11",
     "react": "^0.13.1",
     "reactify": "^1.1.0",
-    "vinyl-source-stream": "^1.1.0"
+    "vinyl-source-stream": "^1.1.0",
+    "elliptic": ">=6.6.1"
+
   }
 }
